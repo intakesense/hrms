@@ -12,7 +12,7 @@ export type AttendanceStatus =
   | 'present'
   | 'absent'
   | 'late'
-  | 'half_day'
+  | 'half-day'
   | 'leave'
   | 'holiday'
   | 'weekend'
