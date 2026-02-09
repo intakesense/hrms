@@ -601,9 +601,9 @@ export default function EmployeeDirectory() {
                                                 </span>
                                             </p>
                                             {renderField('Employment Type', 'employmentType' as any, 'select', ['fulltime', 'intern', 'remote'])}
-                                            {renderField('Joining Date', 'dateOfJoining', 'date')}
-                                            {renderField('Office', 'officeLocation' as any, 'select', ['SanikColony', 'Indore', 'N.F.C.'])}
-                                            {renderField('Supervisor', 'reportingManager' as any)}
+                                            {renderField('Joining Date', 'joiningDate' as any, 'date')}
+                                            {renderField('Office', 'officeAddress' as any, 'select', ['SanikColony', 'Indore', 'N.F.C.', 'Offsite'])}
+                                            {renderField('Supervisor', 'reportingSupervisor' as any)}
                                         </div>
 
                                         {/* Personal Info */}
@@ -617,8 +617,8 @@ export default function EmployeeDirectory() {
                                             {renderField('Mother\'s Name', 'motherName')}
                                             {renderField('Mother\'s Phone', 'motherPhone' as any, 'tel')}
                                             {renderField('Address', 'address')}
-                                            {renderField('Aadhaar', 'govtId' as any, 'number')}
-                                            {renderField('PAN', 'govtId' as any)}
+                                            {renderField('Aadhaar', 'aadhaarNumber' as any)}
+                                            {renderField('PAN', 'panNumber' as any)}
                                             {renderField('Emergency Contact Name', 'emergencyContactName' as any)}
                                             {renderField('Emergency Contact Number', 'emergencyContactNumber' as any, 'tel')}
                                         </div>
@@ -626,9 +626,9 @@ export default function EmployeeDirectory() {
                                         {/* Financial Info */}
                                         <div className="space-y-2">
                                             <h3 className="font-semibold text-lg text-cyan-600 dark:text-cyan-400 mb-2">Financial Information</h3>
-                                            {renderField('Bank', 'bankDetails' as any)}
-                                            {renderField('Account #', 'bankDetails' as any)}
-                                            {renderField('IFSC', 'bankDetails' as any)}
+                                            {renderField('Bank', 'bankName' as any)}
+                                            {renderField('Account #', 'bankAccountNumber' as any)}
+                                            {renderField('IFSC', 'bankIFSCCode' as any)}
                                             {renderField('Payment Mode', 'paymentMode' as any, 'select', ['Bank Transfer', 'Cheque', 'Cash'])}
                                         </div>
                                     </div>

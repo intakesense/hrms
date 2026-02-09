@@ -202,7 +202,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
             }
         }
 
-        if (status === "half_day") return <AlertCircle className="w-5 h-5 text-blue-500" />;
+        if (status === "half-day") return <AlertCircle className="w-5 h-5 text-blue-500" />;
         if (status === "absent") return <XCircle className="w-5 h-5 text-red-500" />;
 
         return <AlertCircle className="w-5 h-5 text-slate-400" />;
@@ -261,7 +261,7 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
             }
         }
 
-        if (status === "half_day") {
+        if (status === "half-day") {
             return (
                 <span className={`${baseClasses} bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700`}>
                     Half Day

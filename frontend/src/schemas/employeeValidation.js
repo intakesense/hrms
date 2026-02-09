@@ -96,7 +96,7 @@ export const employeeSchema = z.object({
 
   employmentType: z.enum(['fulltime', 'intern', 'remote', 'contract', 'parttime']).optional(),
 
-  officeAddress: z.enum(['SanikColony', 'Indore', 'N.F.C.', 'Remote']).optional(),
+  officeAddress: z.enum(['SanikColony', 'Indore', 'N.F.C.', 'Offsite']).optional(),
 
   reportingSupervisor: z.string().max(100).optional(),
 

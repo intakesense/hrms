@@ -12,7 +12,7 @@ export type AttendanceStatus =
   | 'present'
   | 'absent'
   | 'late'
-  | 'half_day'
+  | 'half-day'
   | 'leave'
   | 'holiday'
   | 'weekend'
@@ -79,6 +79,14 @@ export interface Employee {
   bankIFSCCode?: string;
   panNumber?: string;
   aadhaarNumber?: string;
+  // Direct fields from backend
+  officeAddress?: string;
+  reportingSupervisor?: string;
+  paymentMode?: string;
+  fatherPhone?: string;
+  motherPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactNumber?: string;
   // Nested bank details (legacy/alternative format)
   bankDetails?: {
     accountNumber?: string;

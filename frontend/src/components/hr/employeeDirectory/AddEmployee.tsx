@@ -440,6 +440,7 @@ const AddEmployee: React.FC = () => {
                                         <SelectItem value="SanikColony">Sanik Colony</SelectItem>
                                         <SelectItem value="Indore">Indore</SelectItem>
                                         <SelectItem value="N.F.C.">N.F.C.</SelectItem>
+                                        <SelectItem value="Offsite">Offsite</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </LabelInputContainer>

@@ -173,7 +173,7 @@ const InactiveEmployees: React.FC = () => {
 
                                             <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                                                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                                                <span>Joined {formatDate(employee.dateOfJoining, false, 'DD MMM YYYY')}</span>
+                                                <span>Joined {formatDate(employee.joiningDate, false, 'DD MMM YYYY')}</span>
                                             </div>
                                         </div>
 
@@ -310,9 +310,9 @@ const InactiveEmployees: React.FC = () => {
                                             <div className="space-y-2 text-sm">
                                                 <div><span className="font-medium">Company:</span> {employeeDetails.companyName || 'N/A'}</div>
                                                 <div><span className="font-medium">Employment Type:</span> {employeeDetails.employmentType}</div>
-                                                <div><span className="font-medium">Joining Date:</span> {formatDate(employeeDetails.dateOfJoining, false, 'DD MMM YYYY')}</div>
-                                                <div><span className="font-medium">Office:</span> {employeeDetails.officeLocation?.address || 'N/A'}</div>
-                                                <div><span className="font-medium">Supervisor:</span> {employeeDetails.reportingManager?.name || 'N/A'}</div>
+                                                <div><span className="font-medium">Joining Date:</span> {formatDate(employeeDetails.joiningDate, false, 'DD MMM YYYY')}</div>
+                                                <div><span className="font-medium">Office:</span> {employeeDetails.officeAddress || 'N/A'}</div>
+                                                <div><span className="font-medium">Supervisor:</span> {employeeDetails.reportingSupervisor || 'N/A'}</div>
                                             </div>
                                         </div>
 
@@ -322,8 +322,8 @@ const InactiveEmployees: React.FC = () => {
                                                 Government Documents
                                             </h4>
                                             <div className="space-y-2 text-sm">
-                                                <div><span className="font-medium">Aadhaar Number:</span> {employeeDetails.govtId?.aadhaar || 'N/A'}</div>
-                                                <div><span className="font-medium">PAN Number:</span> {employeeDetails.govtId?.pan || 'N/A'}</div>
+                                                <div><span className="font-medium">Aadhaar Number:</span> {employeeDetails.aadhaarNumber || 'N/A'}</div>
+                                                <div><span className="font-medium">PAN Number:</span> {employeeDetails.panNumber || 'N/A'}</div>
                                             </div>
                                         </div>
 
@@ -333,9 +333,9 @@ const InactiveEmployees: React.FC = () => {
                                                 Banking Information
                                             </h4>
                                             <div className="space-y-2 text-sm">
-                                                <div><span className="font-medium">Bank Name:</span> {employeeDetails.bankDetails?.bankName}</div>
-                                                <div><span className="font-medium">Account Number:</span> {employeeDetails.bankDetails?.accountNumber}</div>
-                                                <div><span className="font-medium">IFSC Code:</span> {employeeDetails.bankDetails?.ifscCode}</div>
+                                                <div><span className="font-medium">Bank Name:</span> {employeeDetails.bankName || 'N/A'}</div>
+                                                <div><span className="font-medium">Account Number:</span> {employeeDetails.bankAccountNumber || 'N/A'}</div>
+                                                <div><span className="font-medium">IFSC Code:</span> {employeeDetails.bankIFSCCode || 'N/A'}</div>
                                             </div>
                                         </div>
 

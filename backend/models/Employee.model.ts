@@ -139,8 +139,8 @@ const employeeSchema = new Schema<IEmployee>(
     officeAddress: {
       type: String,
       enum: {
-        values: ['SanikColony', 'Indore', 'N.F.C.'] as OfficeAddress[],
-        message: 'Office address must be one of: SanikColony, Indore, N.F.C.',
+        values: ['SanikColony', 'Indore', 'N.F.C.','Offsite'] as OfficeAddress[],
+        message: 'Office address must be one of: SanikColony, Indore, N.F.C., Offsite',
       },
       required: [true, 'Office address is required'],
     },

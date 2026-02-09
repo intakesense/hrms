@@ -58,7 +58,7 @@ export interface IAuthRequest extends Request {
 
 export type Gender = 'male' | 'female' | 'other';
 export type MaritalStatus = 'single' | 'married' | 'divorced';
-export type OfficeAddress = 'SanikColony' | 'Indore' | 'N.F.C.';
+export type OfficeAddress = 'SanikColony' | 'Indore' | 'N.F.C.' | 'Offsite';
 export type CompanyName =
   | 'Indra Financial Services Limited'
   | 'COSMOS INVESTIFIASSET MANAGEMENT LLP'

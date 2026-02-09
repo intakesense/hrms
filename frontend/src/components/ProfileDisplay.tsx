@@ -77,8 +77,8 @@ export default function ProfileDisplay() {
   };
 
   // Helper getters for Employee type properties
-  const isActive = employee?.status === 'active';
-  const joiningDate = employee?.dateOfJoining;
+  const isActive = employee?.isActive === true;
+  const joiningDate = employee?.joiningDate;
   const position = employee?.position || employee?.designation || "N/A";
   const department = employee?.department || "N/A";
   const phone = employee?.phone || "N/A";
@@ -93,13 +93,13 @@ export default function ProfileDisplay() {
 
   const emergencyContactName = employee?.emergencyContactName || "Not provided";
   const emergencyContactPhone = employee?.emergencyContactNumber || "Not provided";
-  const aadhaarNumber = employee?.govtId?.aadhaar || "N/A";
-  const panNumber = employee?.govtId?.pan || "N/A";
-  const bankName = employee?.bankDetails?.bankName || "Not provided";
-  const bankAccountNumber = employee?.bankDetails?.accountNumber || "Not provided";
-  const bankIFSCCode = employee?.bankDetails?.ifscCode || "Not provided";
-  const officeAddress = employee?.officeLocation?.address || "N/A";
-  const reportingManager = employee?.reportingManager?.name || "N/A";
+  const aadhaarNumber = employee?.aadhaarNumber || "N/A";
+  const panNumber = employee?.panNumber || "N/A";
+  const bankName = employee?.bankName || "Not provided";
+  const bankAccountNumber = employee?.bankAccountNumber || "Not provided";
+  const bankIFSCCode = employee?.bankIFSCCode || "Not provided";
+  const officeAddress = employee?.officeAddress || "N/A";
+  const reportingManager = employee?.reportingSupervisor || "N/A";
 
   if (loading) {
     return (
@@ -368,7 +368,7 @@ export default function ProfileDisplay() {
                       <InfoField icon={<CreditCard size={16} />} label="IFSC Code" value={bankIFSCCode} />
                     </div>
 
-                    {!employee.bankDetails?.bankName && !employee.bankDetails?.accountNumber && (
+                    {!employee.bankName && !employee.bankAccountNumber && (
                       <div className="flex flex-col items-center justify-center py-8 text-center">
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg w-full max-w-md">
                           <CreditCard className="h-10 w-10 text-yellow-500 dark:text-yellow-400 mx-auto mb-4" />
