@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useHolidays, useEmployeeAttendanceWithAbsents, useUpdateAttendanceRecord } from '../../../../hooks/queries';
-import { CheckCircle, AlertCircle, XCircle, Clock, ChevronLeft, ChevronRight, Calendar, MapPin, Eye, Edit3 } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle, Clock, ChevronLeft, ChevronRight, Calendar, MapPin, Eye, Edit3, X, Save } from 'lucide-react';
+import TimeInput from './TimeInput';
 import LocationMapModal from '../../../ui/LocationMapModal';
 import { formatTime, formatDate } from '../../../../utils/istUtils';
 import AttendanceAnalytics, { AttendanceStatistics } from './AttendanceAnalytics';
@@ -24,6 +25,179 @@ interface ProcessedAttendanceRecord extends Omit<AttendanceRecord, 'location'> {
     holidayTitle?: string;
 }
 
+// Bulk Edit Attendance Modal - opens when user clicks "Update Attendance" after selecting records
+interface BulkEditModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    selectedCount: number;
+    onSubmit: (formData: { status: string; checkIn: string; checkOut: string }) => Promise<void>;
+    isSubmitting: boolean;
+}
+
+const BulkEditAttendanceModal: React.FC<BulkEditModalProps> = ({ isOpen, onClose, selectedCount, onSubmit, isSubmitting }) => {
+    const [formData, setFormData] = useState({
+        status: 'present',
+        checkIn: '',
+        checkOut: ''
+    });
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            // Default to present with standard times
+            const today = new Date();
+            const baseDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            setFormData({
+                status: 'present',
+                checkIn: `${baseDate}T09:30`,
+                checkOut: `${baseDate}T17:30`
+            });
+            setError('');
+        }
+    }, [isOpen]);
+
+    const handleStatusChange = (status: string) => {
+        const today = new Date();
+        const baseDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        setFormData(prev => {
+            const newData = { ...prev, status };
+            switch (status) {
+                case 'present':
+                    if (!newData.checkIn) newData.checkIn = `${baseDate}T09:30`;
+                    if (!newData.checkOut) newData.checkOut = `${baseDate}T17:30`;
+                    break;
+                case 'half-day':
+                    if (!newData.checkIn) newData.checkIn = `${baseDate}T09:30`;
+                    newData.checkOut = `${baseDate}T13:30`;
+                    break;
+                case 'absent':
+                    newData.checkIn = '';
+                    newData.checkOut = '';
+                    break;
+            }
+            return newData;
+        });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (formData.status !== 'absent' && !formData.checkIn) {
+            setError('Check-in time is required for non-absent status');
+            return;
+        }
+
+        try {
+            await onSubmit(formData);
+        } catch {
+            setError('Failed to update attendance records. Please try again.');
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md">
+                <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <Edit3 className="w-5 h-5 text-cyan-600" />
+                        Update Attendance
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {error && (
+                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="p-3 bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg">
+                        <span className="text-sm font-medium text-cyan-700 dark:text-cyan-300">
+                            Updating {selectedCount} record{selectedCount > 1 ? 's' : ''}
+                        </span>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Status
+                        </label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => handleStatusChange(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            required
+                        >
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                            <option value="half-day">Half Day</option>
+                        </select>
+                    </div>
+
+                    {formData.status !== 'absent' && (
+                        <>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Check In Time
+                                </label>
+                                <TimeInput
+                                    value={formData.checkIn}
+                                    onChange={(value: string) => setFormData(prev => ({ ...prev, checkIn: value }))}
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    Check Out Time
+                                </label>
+                                <TimeInput
+                                    value={formData.checkOut}
+                                    onChange={(value: string) => setFormData(prev => ({ ...prev, checkOut: value }))}
+                                    className="w-full"
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="flex-1 px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    Save Changes
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
 const AttendanceTable: React.FC<AttendanceTableProps> = ({
     employeeId,
     employeeProfile: passedEmployeeProfile,
@@ -42,10 +216,10 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
     const [joiningDate, setJoiningDate] = useState<string | null>(null);
     const [effectiveDateRange, setEffectiveDateRange] = useState<any>(null);
 
-    // Bulk selection state
-    const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
-    const [bulkStatus, setBulkStatus] = useState('present');
+    // Bulk selection state - uses date strings as keys so selections persist across pages
+    const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
     const [showBulkActions, setShowBulkActions] = useState(false);
+    const [showBulkEditModal, setShowBulkEditModal] = useState(false);
 
     // Location modal state
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -346,68 +520,78 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
         return hasLoc;
     };
 
-    // Bulk selection handlers
-    const handleSelectRecord = (recordIndex: number, isSelected: boolean) => {
+    // Bulk selection handlers - use date strings as unique keys
+    const handleSelectRecord = (dateKey: string, isSelected: boolean) => {
         const newSelected = new Set(selectedRecords);
         if (isSelected) {
-            newSelected.add(recordIndex);
+            newSelected.add(dateKey);
         } else {
-            newSelected.delete(recordIndex);
+            newSelected.delete(dateKey);
         }
         setSelectedRecords(newSelected);
     };
 
     const handleSelectAll = (isSelected: boolean) => {
         if (isSelected) {
-            const allIndices = new Set(displayedData.map((_, index) => index));
-            setSelectedRecords(allIndices);
+            // Select ALL records matching the current filter, not just the current page
+            let filtered = allAttendanceData;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(record => record.status === statusFilter);
+            }
+            const newSelected = new Set(selectedRecords);
+            filtered.forEach(record => newSelected.add(record.date));
+            setSelectedRecords(newSelected);
         } else {
             setSelectedRecords(new Set());
         }
     };
 
-    const handleBulkStatusUpdate = async () => {
+    const handleBulkStatusUpdate = async (formData: { status: string; checkIn: string; checkOut: string }) => {
         if (selectedRecords.size === 0) return;
 
         if (!employeeId) return;
 
         try {
-            const promises = Array.from(selectedRecords).map(async (index) => {
-                const record = displayedData[index];
+            // Look up records from allAttendanceData (not displayedData) so all pages are covered
+            const selectedDates = Array.from(selectedRecords);
+            const promises = selectedDates.map(async (dateKey) => {
+                const record = allAttendanceData.find(r => r.date === dateKey);
+                if (!record) return;
+
+                const recordDate = new Date(dateKey);
+                const year = recordDate.getFullYear();
+                const month = String(recordDate.getMonth() + 1).padStart(2, '0');
+                const day = String(recordDate.getDate()).padStart(2, '0');
+                const baseDate = `${year}-${month}-${day}`;
+
                 const updateData: any = {
-                    status: bulkStatus,
+                    status: formData.status,
                     employeeId: employeeId,
                     date: record.date
                 };
 
-                // Auto-fill times based on status (IST times)
-                const baseDate = new Date(record.date).toISOString().split('T')[0];
-                switch (bulkStatus) {
-                    case 'present':
-                        updateData.checkIn = `${baseDate}T09:30:00`;
-                        updateData.checkOut = `${baseDate}T17:30:00`;
-                        break;
-                    case 'half-day':
-                        updateData.checkIn = `${baseDate}T09:30:00`;
-                        updateData.checkOut = `${baseDate}T13:30:00`;
-                        break;
-                    case 'absent':
+                if (formData.status === 'absent') {
+                    updateData.checkIn = null;
+                    updateData.checkOut = null;
+                } else {
+                    if (formData.checkIn) {
+                        const timePart = formData.checkIn.split('T')[1] || '';
+                        updateData.checkIn = new Date(`${baseDate}T${timePart}`).toISOString();
+                    } else {
                         updateData.checkIn = null;
+                    }
+                    if (formData.checkOut) {
+                        const timePart = formData.checkOut.split('T')[1] || '';
+                        updateData.checkOut = new Date(`${baseDate}T${timePart}`).toISOString();
+                    } else {
                         updateData.checkOut = null;
-                        break;
+                    }
                 }
 
                 const recordId = record._id || 'new';
 
-                return new Promise((resolve, reject) => {
-                    updateAttendanceMutation.mutate(
-                        { recordId, updateData },
-                        {
-                            onSuccess: resolve,
-                            onError: reject
-                        }
-                    );
-                });
+                // Use mutateAsync for proper Promise handling (mutate callbacks can be dropped on rapid calls)
+                return updateAttendanceMutation.mutateAsync({ recordId, updateData });
             });
 
             await Promise.all(promises);
@@ -415,7 +599,8 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
             // Reset selections and refresh data
             setSelectedRecords(new Set());
             setShowBulkActions(false);
-            refetchAttendance(); // Refresh the data
+            setShowBulkEditModal(false);
+            refetchAttendance();
         } catch (err) {
             console.error('Failed to bulk update attendance:', err);
             alert('Failed to update attendance records. Please try again.');
@@ -460,25 +645,12 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                             <span className="text-sm font-medium text-cyan-700 dark:text-cyan-300">
                                 {selectedRecords.size} record{selectedRecords.size > 1 ? 's' : ''} selected
                             </span>
-                            <select
-                                value={bulkStatus}
-                                onChange={(e) => setBulkStatus(e.target.value)}
-                                className="px-3 py-2 border border-cyan-300 dark:border-cyan-600 rounded-lg bg-white dark:bg-slate-700 text-sm"
-                            >
-                                <option value="present">Mark as Present</option>
-                                <option value="absent">Mark as Absent</option>
-                                <option value="half-day">Mark as Half Day</option>
-                            </select>
                             <button
-                                onClick={handleBulkStatusUpdate}
-                                disabled={updateAttendanceMutation.isPending}
-                                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-400 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
+                                onClick={() => setShowBulkEditModal(true)}
+                                className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-sm transition-colors flex items-center gap-2"
                             >
-                                {updateAttendanceMutation.isPending ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                ) : (
-                                    'Update Selected'
-                                )}
+                                <Edit3 className="w-4 h-4" />
+                                Update Attendance
                             </button>
                         </div>
                         <button
@@ -596,7 +768,13 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                                         <th className="p-3 text-left font-semibold text-slate-600 dark:text-slate-300">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedRecords.size === displayedData.length && displayedData.length > 0}
+                                                checked={(() => {
+                                                    let filtered = allAttendanceData;
+                                                    if (statusFilter !== 'all') {
+                                                        filtered = filtered.filter(r => r.status === statusFilter);
+                                                    }
+                                                    return filtered.length > 0 && filtered.every(r => selectedRecords.has(r.date));
+                                                })()}
                                                 onChange={(e) => handleSelectAll(e.target.checked)}
                                                 className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                                             />
@@ -637,8 +815,8 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                                             <td className="p-3">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedRecords.has(index)}
-                                                    onChange={(e) => handleSelectRecord(index, e.target.checked)}
+                                                    checked={selectedRecords.has(record.date)}
+                                                    onChange={(e) => handleSelectRecord(record.date, e.target.checked)}
                                                     className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
                                                 />
                                             </td>
@@ -836,6 +1014,17 @@ const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Bulk Edit Attendance Modal */}
+            {showBulkEditModal && (
+                <BulkEditAttendanceModal
+                    isOpen={showBulkEditModal}
+                    onClose={() => setShowBulkEditModal(false)}
+                    selectedCount={selectedRecords.size}
+                    onSubmit={handleBulkStatusUpdate}
+                    isSubmitting={updateAttendanceMutation.isPending}
+                />
             )}
 
             {/* Location Map Modal */}
