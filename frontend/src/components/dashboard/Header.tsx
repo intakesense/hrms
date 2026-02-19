@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Clock, User, Calendar, HelpCircle, Moon, Sun, LogIn, LogOut, MapPin, Edit3 } from "lucide-react";
+import { Clock, User, Calendar, HelpCircle, Moon, Sun, LogIn, LogOut, MapPin, Edit3, List } from "lucide-react";
 import { formatTime, formatISTDate } from "../../utils/luxonUtils";
 import useProfilePicture from "../../hooks/useProfilePicture";
 
@@ -124,6 +124,13 @@ const Header: React.FC<HeaderProps> = ({
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+            <a
+              href="https://tms.intakesense.com/"
+              title="Task Management System"
+              className="p-2.5 text-muted-foreground hover:text-cyan-600 dark:hover:text-cyan-400 bg-card rounded-xl shadow-md hover:shadow-lg border border-border transition-all duration-200 hover:scale-105"
+            >
+              <List size={18} />
+            </a>
             {/* Refresh button removed - React Query automatically handles data freshness */}
           </div>
           {/* Time Display */}

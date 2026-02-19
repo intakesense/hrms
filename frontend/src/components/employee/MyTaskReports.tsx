@@ -33,8 +33,8 @@ interface TaskReportSubmission {
 export default function MyTaskReports() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [dateRange, setDateRange] = useState<DateRange>({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
-    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().slice(0, 10)
+    startDate: '',
+    endDate: ''
   });
   const [selectedReport, setSelectedReport] = useState<ProcessedTaskReport | null>(null);
   const [showTaskModal, setShowTaskModal] = useState<boolean>(false);
@@ -236,7 +236,7 @@ export default function MyTaskReports() {
         </div>
 
         {/* Date Range Filter */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="flex flex-col">
             <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">From</label>
             <input
@@ -255,6 +255,15 @@ export default function MyTaskReports() {
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
             />
           </div>
+          {(dateRange.startDate || dateRange.endDate) && (
+            <button
+              onClick={() => { setDateRange({ startDate: '', endDate: '' }); setCurrentPage(1); }}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              title="Clear date filters"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
