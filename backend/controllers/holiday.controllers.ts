@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import Holiday from '../models/Holiday.model.js';
 import notificationService from '../utils/notificationService.js';
-import { getISTDayBoundaries, parseISTDateString } from '../utils/timezone.js';
+import { parseISTDateString } from '../utils/timezone.js';
 import logger from '../utils/logger.js';
 import type { IHoliday } from '../types/index.js';
 
@@ -26,13 +26,17 @@ const transformHolidayForResponse = (holiday: IHoliday) => ({
 });
 
 /**
- * Parse and validate a date string, returning start of day in IST
+ * Parse and validate a date string, returning UTC midnight for consistent storage
+ * MongoDB stores dates in UTC, so we use UTC midnight to ensure
+ * toISOString().split('T')[0] returns the correct date everywhere
  * @throws Error with user-friendly message if date is invalid
  */
 const parseHolidayDate = (dateString: string): Date => {
   const parsedDate = parseISTDateString(dateString);
-  const { startOfDay } = getISTDayBoundaries(parsedDate);
-  return new Date(startOfDay.valueOf());
+  const year = parsedDate.year;
+  const month = parsedDate.month;
+  const day = parsedDate.day;
+  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
 };
 
 /**
