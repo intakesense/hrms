@@ -771,7 +771,7 @@ const HRMSDashboard: React.FC = () => {
         try {
             const helpData = {
                 subject: data.title,
-                message: data.message,
+                description: data.message,
                 category: data.category,
                 priority: data.priority
             };
@@ -838,8 +838,8 @@ const HRMSDashboard: React.FC = () => {
             ...h,
             type: 'help' as const,
             displayDate: h.createdAt,
-            displayReason: h.message || (h as any).description || '',
-            status: ((h.status === 'open' ? 'pending' : h.status) || 'pending') as any,
+            displayReason: (h as any).description || h.message || '',
+            status: h.status || 'pending',
         })),
         ...(myRegularizations || []).map((r: RegularizationRequest) => ({
             ...r,

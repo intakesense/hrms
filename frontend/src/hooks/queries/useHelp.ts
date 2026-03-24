@@ -69,7 +69,7 @@ export const useUpdateHelpInquiry = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updateData }: UpdateHelpInquiryDto & { id: string }) => {
-      const { data } = await axiosInstance.put<ApiResponse<HelpInquiry>>(
+      const { data } = await axiosInstance.patch<ApiResponse<HelpInquiry>>(
         API_ENDPOINTS.HELP.UPDATE(id),
         updateData
       );
