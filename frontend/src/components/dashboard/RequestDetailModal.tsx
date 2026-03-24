@@ -1,5 +1,5 @@
 import { useState, ReactElement } from 'react';
-import { X, Calendar, Clock, User, FileText, CheckCircle, XCircle, AlertCircle, Play, CheckCheck, MapPin, LucideIcon } from 'lucide-react';
+import { X, Clock, User, FileText, CheckCircle, XCircle, AlertCircle, Play, CheckCheck, MapPin, LucideIcon } from 'lucide-react';
 import { formatDate } from '@/utils/istUtils';
 import {
   useUpdateLeaveStatus,
@@ -116,33 +116,33 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
 
       switch (request.type) {
         case 'leave':
-          await updateLeaveMutation.mutateAsync({ leaveId: requestId, status });
+          await updateLeaveMutation.mutateAsync({ leaveId: requestId, status: status as 'pending' | 'approved' | 'rejected' });
           break;
         case 'help':
           await updateHelpMutation.mutateAsync({
-            inquiryId: requestId,
-            status,
+            id: requestId,
+            status: status as 'pending' | 'in-progress' | 'resolved',
             response: helpResponse || undefined
           });
           break;
         case 'regularization':
           await reviewRegularizationMutation.mutateAsync({
             requestId,
-            status,
+            status: status as 'pending' | 'approved' | 'rejected',
             comment: reviewComment
           });
           break;
         case 'password':
           if (status === 'approved') {
-            await approvePasswordResetMutation.mutateAsync({ requestId });
+            await approvePasswordResetMutation.mutateAsync(requestId);
           } else if (status === 'rejected') {
-            await rejectPasswordResetMutation.mutateAsync({ requestId, comment: reviewComment });
+            await rejectPasswordResetMutation.mutateAsync({ requestId, reason: reviewComment });
           } else {
             throw new Error('Invalid status for password reset request');
           }
           break;
         case 'wfh':
-          await updateWFHMutation.mutateAsync({ requestId, status, reviewComment });
+          await updateWFHMutation.mutateAsync({ requestId, status: status as 'pending' | 'approved' | 'rejected', reviewComment });
           break;
         default:
           throw new Error('Unknown request type');

@@ -34,7 +34,7 @@ export type SalarySlipStatus = 'draft' | 'finalized';
 export type PolicyStatus = 'active' | 'inactive' | 'archived';
 
 // Help/Support
-export type HelpInquiryStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+export type HelpInquiryStatus = 'pending' | 'in-progress' | 'resolved';
 
 // ============================================================================
 // USER & EMPLOYEE
@@ -592,13 +592,14 @@ export interface HelpInquiry {
   userId: string;
   employeeId: string;
   subject: string;
-  message: string;
+  description: string;
+  message?: string; // legacy compatibility
   category: string;
   status: HelpInquiryStatus;
   priority: 'low' | 'medium' | 'high';
-  assignedTo?: string;
-  resolution?: string;
-  resolvedAt?: string;
+  response?: string;
+  respondedBy?: string;
+  respondedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -947,15 +948,14 @@ export interface UpdatePolicyDto extends Partial<CreatePolicyDto> {
 // Help Inquiry DTOs
 export interface CreateHelpInquiryDto {
   subject: string;
-  message: string;
+  description: string;
   category: string;
   priority?: 'low' | 'medium' | 'high';
 }
 
 export interface UpdateHelpInquiryDto {
   status?: HelpInquiryStatus;
-  assignedTo?: string;
-  resolution?: string;
+  response?: string;
 }
 
 // ============================================================================

@@ -289,15 +289,15 @@ const AdminRequestsPage = () => {
         });
       } else if (request.type === 'help') {
         await updateHelpInquiryMutation.mutateAsync({
-          inquiryId: request._id,
+          id: request._id,
           status: editData.status as 'pending' | 'in-progress' | 'resolved',
           response: editData.response
         });
       } else if (request.type === 'regularization') {
         await reviewRegularizationMutation.mutateAsync({
-          regId: request._id,
+          requestId: request._id,
           status: editData.status as 'pending' | 'approved' | 'rejected',
-          response: editData.response
+          comment: editData.response
         });
       }
 
@@ -310,7 +310,7 @@ const AdminRequestsPage = () => {
       handleCancelEdit(request._id);
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Update Failed",
         description: error instanceof Error ? error.message : "Failed to update request."
       });
