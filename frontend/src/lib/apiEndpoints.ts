@@ -65,7 +65,19 @@ export const API_ENDPOINTS = {
     REQUEST: '/leaves/request',
     MY_LEAVES: '/leaves/my',
     ALL_LEAVES: '/leaves/all',
+    PREVIEW_DAYS: '/leaves/preview-days',
     UPDATE_STATUS: (id: string) => `/leaves/${id}/status`,
+  },
+
+  // Expense Management
+  EXPENSES: {
+    BASE: '/expenses',
+    REQUEST: '/expenses/request',
+    MY_EXPENSES: '/expenses/my',
+    ALL_EXPENSES: '/expenses/all',
+    UPDATE_STATUS: (id: string) => `/expenses/${id}/status`,
+    BULK_UPDATE: '/expenses/bulk-status',
+    EXPORT: '/expenses/export',
   },
 
   // Regularization Management

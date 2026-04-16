@@ -445,7 +445,8 @@ export class AttendanceBusinessService {
   /**
    * Process attendance for a specific day
    * Determines the appropriate status and flags based on attendance record, leaves, and day type
-   * Priority: Attendance record > Leave > Holiday/Weekend
+   * Priority: Attendance record > Holiday/Weekend > Leave
+   * This ensures weekends/holidays within multi-day leaves show correctly as non-working days
    * @param date - Target date
    * @param employee - Employee document
    * @param attendanceRecord - Attendance record (optional)
@@ -502,16 +503,8 @@ export class AttendanceBusinessService {
       return result;
     }
 
-    // PRIORITY 2: Handle approved leave (only if no attendance record)
-    if (approvedLeave) {
-      result.status = ATTENDANCE_STATUS.ABSENT;
-      result.comments = `Leave: ${approvedLeave.leaveType || 'Approved'}`;
-      result.reason = approvedLeave.leaveReason || 'Approved leave';
-      result.flags = computeDayFlags(date, dayType, approvedLeave);
-      return result;
-    }
-
-    // PRIORITY 3: Handle holidays (only if no attendance record and no leave)
+    // PRIORITY 2: Handle holidays (only if no attendance record)
+    // Holidays take precedence over leave — leave should not apply on holidays
     if (dayType.type === 'holiday') {
       result.status = ATTENDANCE_STATUS.ABSENT;
       result.holidayTitle = dayType.holidayTitle;
@@ -519,11 +512,22 @@ export class AttendanceBusinessService {
       return result;
     }
 
-    // PRIORITY 4: Handle weekends (only if no attendance record, no leave, and not a holiday)
+    // PRIORITY 3: Handle weekends (only if no attendance record and not a holiday)
+    // Weekends take precedence over leave — multi-day leaves spanning weekends
+    // should show weekends as "Weekend", not "Leave"
     if (dayType.type === 'weekend') {
       result.status = ATTENDANCE_STATUS.ABSENT;
       result.reason = dayType.reason;
       result.flags = computeDayFlags(date, dayType, null);
+      return result;
+    }
+
+    // PRIORITY 4: Handle approved leave (only on working days with no attendance record)
+    if (approvedLeave) {
+      result.status = ATTENDANCE_STATUS.ABSENT;
+      result.comments = `Leave: ${approvedLeave.leaveType || 'Approved'}`;
+      result.reason = approvedLeave.reason || approvedLeave.leaveReason || 'Approved leave';
+      result.flags = computeDayFlags(date, dayType, approvedLeave);
       return result;
     }
 
@@ -551,8 +555,8 @@ export class AttendanceBusinessService {
 
       // Only process records up to today (don't count future dates)
       if (recordDate <= todayIST) {
-        // Only count working days (exclude weekends and holidays)
-        if (!record.flags?.isWeekend && !record.flags?.isHoliday) {
+        // Only count working days (exclude weekends, holidays, and approved leaves)
+        if (!record.flags?.isWeekend && !record.flags?.isHoliday && !record.flags?.isLeave) {
           totalWorkingDays++;
 
           if (record.status === ATTENDANCE_STATUS.PRESENT || record.status === ATTENDANCE_STATUS.HALF_DAY) {

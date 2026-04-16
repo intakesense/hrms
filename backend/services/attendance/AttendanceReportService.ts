@@ -137,10 +137,12 @@ export class AttendanceReportService {
         getISTDateString(record.date) === dateKey
       );
 
-      // Find approved leave for this date
-      const approvedLeave = approvedLeaves.find(leave =>
-        getISTDateString(leave.leaveDate) === dateKey
-      );
+      // Find approved leave for this date (supports multi-day leaves)
+      const approvedLeave = approvedLeaves.find(leave => {
+        const leaveStart = getISTDateString(leave.startDate);
+        const leaveEnd = getISTDateString(leave.endDate);
+        return dateKey >= leaveStart && dateKey <= leaveEnd;
+      });
 
       // Process the day using business service
       const processedRecord = await AttendanceBusinessService.processAttendanceForDay(
@@ -326,10 +328,11 @@ export class AttendanceReportService {
           record.employee._id.toString() === employee._id.toString()
         );
 
-        // Find approved leave for this employee
-        const approvedLeave = todayLeaves.find(leave =>
-          leave.employeeId === employee.employeeId
-        );
+        // Find approved leave for this employee (using ObjectId)
+        const approvedLeave = todayLeaves.find(leave => {
+          const leaveEmpId = leave.employee?._id?.toString() || leave.employee?.toString();
+          return leaveEmpId === employee._id?.toString();
+        });
 
         // Process using business service
         return await AttendanceBusinessService.processAttendanceForDay(

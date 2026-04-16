@@ -29,6 +29,7 @@ export interface IHrEmailTypes {
   regularizationRequests: boolean;
   helpRequests: boolean;
   employeeMilestones: boolean;
+  expenseRequests: boolean;
 }
 
 export interface IMilestoneTypes {
@@ -175,6 +176,7 @@ const settingsSchema = new Schema<ISettingsDoc>(
         regularizationRequests: { type: Boolean, default: true },
         helpRequests: { type: Boolean, default: true },
         employeeMilestones: { type: Boolean, default: true },
+        expenseRequests: { type: Boolean, default: true },
       },
       holidayReminderEnabled: { type: Boolean, default: true },
       holidayReminderDays: {

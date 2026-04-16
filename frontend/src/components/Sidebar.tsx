@@ -96,6 +96,11 @@ export default function SidebarDemo() {
               icon: <FileText className={iconClass} />,
             },
             {
+              label: "Expenses",
+              href: "/admin/expenses",
+              icon: <Receipt className={iconClass} />,
+            },
+            {
               label: "Holidays",
               href: "/holidays",
               icon: <CalendarDays className={iconClass} />,
@@ -152,6 +157,11 @@ export default function SidebarDemo() {
               label: "Requests",
               href: "/requests",
               icon: <FileText className={iconClass} />,
+            },
+            {
+              label: "Expenses",
+              href: "/expenses/my",
+              icon: <Receipt className={iconClass} />,
             },
             {
               label: "Holidays",

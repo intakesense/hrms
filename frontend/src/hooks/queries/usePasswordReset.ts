@@ -36,7 +36,7 @@ export const useApprovePasswordReset = () => {
 
   return useMutation({
     mutationFn: async (requestId: string) => {
-      const { data } = await axiosInstance.post<ApiResponse>(
+      const { data } = await axiosInstance.put<ApiResponse>(
         API_ENDPOINTS.PASSWORD_RESET.APPROVE(requestId)
       );
       return data;
@@ -56,7 +56,7 @@ export const useRejectPasswordReset = () => {
 
   return useMutation({
     mutationFn: async ({ requestId, reason }: { requestId: string; reason?: string }) => {
-      const { data } = await axiosInstance.post<ApiResponse>(
+      const { data } = await axiosInstance.put<ApiResponse>(
         API_ENDPOINTS.PASSWORD_RESET.REJECT(requestId),
         { remarks: reason }
       );

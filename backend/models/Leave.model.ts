@@ -43,9 +43,8 @@ const leaveSchema = new Schema<ILeave>(
     },
     reason: {
       type: String,
-      required: [true, 'Reason is required'],
       trim: true,
-      minlength: [10, 'Reason must be at least 10 characters'],
+      default: '',
       maxlength: [500, 'Reason cannot exceed 500 characters'],
     },
     status: {
@@ -90,7 +89,9 @@ const leaveSchema = new Schema<ILeave>(
  * Pre-save hook: Calculate number of days automatically
  */
 leaveSchema.pre('save', function (next) {
-  if (this.isModified('startDate') || this.isModified('endDate')) {
+  // Only auto-calculate if numberOfDays was NOT already set by the controller
+  // (e.g., via calculateWorkingDays utility for multi-day leaves)
+  if ((this.isModified('startDate') || this.isModified('endDate')) && !this.numberOfDays) {
     const start = new Date(this.startDate);
     const end = new Date(this.endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());

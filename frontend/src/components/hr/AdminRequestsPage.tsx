@@ -8,7 +8,8 @@ import {
   FileText,
   User,
   Clock4,
-  AlertTriangle
+  AlertTriangle,
+  Receipt
 } from 'lucide-react';
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
@@ -16,6 +17,7 @@ import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Badge } from "../ui/badge";
 import { useToast } from "../ui/toast";
+import { useQueryClient } from '@tanstack/react-query';
 import useAuth from "../../hooks/authjwt";
 import BackButton from "../ui/BackButton";
 import { formatTime, formatISTDate } from '../../utils/luxonUtils';
@@ -25,15 +27,17 @@ import {
   useAllHelpInquiries,
   useRegularizationRequests,
   usePasswordResetRequests,
+  useApprovePasswordReset,
+  useRejectPasswordReset,
+  useAllExpenses,
+  useUpdateExpenseStatus,
   useUpdateLeaveStatus,
   useUpdateHelpInquiry,
-  useReviewRegularization,
-  useApprovePasswordReset,
-  useRejectPasswordReset
+  useReviewRegularization
 } from "../../hooks/queries";
 import type { User as UserType } from '@/types';
 
-type RequestType = 'leave' | 'help' | 'regularization' | 'password';
+type RequestType = 'leave' | 'help' | 'regularization' | 'password' | 'expense';
 type RequestStatus = 'pending' | 'approved' | 'rejected' | 'resolved' | 'expired' | 'completed' | 'in-progress';
 
 interface BaseRequest {
@@ -63,7 +67,13 @@ interface HelpRequest extends BaseRequest {
   priority?: 'low' | 'medium' | 'high';
 }
 
-type UnifiedRequest = BaseRequest | PasswordRequest | HelpRequest;
+interface ExpenseRequest extends BaseRequest {
+  type: 'expense';
+  item?: string;
+  amount?: number;
+}
+
+type UnifiedRequest = BaseRequest | PasswordRequest | HelpRequest | ExpenseRequest;
 
 interface EditState {
   [key: string]: {
@@ -92,6 +102,7 @@ const AdminRequestsPage = () => {
 
   const user = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isAdminOrHR = user?.role === 'admin' || user?.role === 'hr';
 
   // React Query hooks - conditionally fetch based on active tab
@@ -102,13 +113,15 @@ const AdminRequestsPage = () => {
   const shouldFetchHelp = activeTab === 'all' || activeTab === 'help';
   const shouldFetchReg = activeTab === 'all' || activeTab === 'regularization';
   const shouldFetchPassword = activeTab === 'all' || activeTab === 'password';
+  const shouldFetchExpense = activeTab === 'all' || activeTab === 'expense';
 
   const { data: leavesData, isLoading: leavesLoading } = useAllLeaves({ enabled: isAdminOrHR && shouldFetchLeaves });
   const { data: helpData, isLoading: helpLoading } = useAllHelpInquiries({ enabled: isAdminOrHR && shouldFetchHelp });
   const { data: regData, isLoading: regLoading } = useRegularizationRequests({ enabled: isAdminOrHR && shouldFetchReg });
   const { data: passwordData, isLoading: passwordLoading } = usePasswordResetRequests({ enabled: isAdminOrHR && shouldFetchPassword });
+  const { data: expenseData, isLoading: expenseLoading } = useAllExpenses(undefined, { enabled: isAdminOrHR && shouldFetchExpense });
 
-  const loading = leavesLoading || helpLoading || regLoading || passwordLoading;
+  const loading = leavesLoading || helpLoading || regLoading || passwordLoading || expenseLoading;
 
   // Mutations
   const updateLeaveStatusMutation = useUpdateLeaveStatus();
@@ -116,13 +129,15 @@ const AdminRequestsPage = () => {
   const reviewRegularizationMutation = useReviewRegularization();
   const approvePasswordResetMutation = useApprovePasswordReset();
   const rejectPasswordResetMutation = useRejectPasswordReset();
+  const updateExpenseStatusMutation = useUpdateExpenseStatus();
 
   const tabs: Tab[] = [
     { id: 'all', label: 'All Requests', icon: FileText },
     { id: 'leave', label: 'Leave Requests', icon: Calendar },
     { id: 'help', label: 'Help Desk', icon: HelpCircle },
     { id: 'regularization', label: 'Regularization', icon: Clock },
-    { id: 'password', label: 'Password Resets', icon: Key }
+    { id: 'password', label: 'Password Resets', icon: Key },
+    { id: 'expense', label: 'Expenses', icon: Receipt }
   ];
 
   // Format requests from React Query data using useMemo
@@ -135,12 +150,21 @@ const AdminRequestsPage = () => {
     const leaves = leavesData || [];
     const formattedLeaves = leaves.map((leave): BaseRequest => {
       const userInfo = users.find(u => u.employeeId === leave.employeeId);
+      const startDate = leave.startDate || leave.leaveDate || leave.date;
+      const endDate = leave.endDate || startDate;
+      const isMultiDay = startDate && endDate && new Date(startDate).toDateString() !== new Date(endDate).toDateString();
+      const numberOfDays = leave.numberOfDays;
+      const daysLabel = numberOfDays ? ` (${numberOfDays} working day${numberOfDays !== 1 ? 's' : ''})` : '';
+      const title = isMultiDay
+        ? `${leave.leaveType} Leave${daysLabel}`
+        : `${leave.leaveType} Leave`;
+      const description = leave.leaveReason || leave.reason || '';
       return {
         ...leave,
         type: 'leave' as const,
-        title: `${leave.leaveType} Leave`,
-        description: leave.leaveReason || leave.reason || '',
-        date: new Date(leave.leaveDate || leave.date),
+        title,
+        description,
+        date: new Date(startDate),
         createdAt: new Date(leave.createdAt || leave.requestDate || Date.now()),
         status: (leave.status || 'pending') as RequestStatus,
         user: userInfo ? { name: userInfo.name, email: userInfo.email } : null
@@ -213,9 +237,26 @@ const AdminRequestsPage = () => {
     });
     allRequests.push(...formattedPassword);
 
+    // Format expense requests
+    const expenses = expenseData || [];
+    const formattedExpenses = expenses.map((exp: any): ExpenseRequest => ({
+      ...exp,
+      type: 'expense' as const,
+      title: `Expense: ${exp.item || 'Reimbursement'}`,
+      description: `Amount: ₹${Number(exp.amount || 0).toLocaleString()}`,
+      date: new Date(exp.date || exp.createdAt || Date.now()),
+      createdAt: new Date(exp.createdAt || Date.now()),
+      status: (exp.status || 'pending') as RequestStatus,
+      user: exp.employeeName ? { name: exp.employeeName, email: '' } : 
+            (exp.employee && typeof exp.employee === 'object' && 'firstName' in exp.employee ? 
+             { name: `${exp.employee.firstName} ${exp.employee.lastName || ''}`.trim(), email: exp.employee.email || '' } : 
+             null)
+    }));
+    allRequests.push(...formattedExpenses);
+
     // Sort by most recent first
     return allRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [isAdminOrHR, leavesData, helpData, regData, passwordData, users]);
+  }, [isAdminOrHR, leavesData, helpData, regData, passwordData, expenseData, users]);
 
   const filteredRequests = requests.filter(request => {
     const matchesTab = activeTab === 'all' || request.type === activeTab;
@@ -231,6 +272,7 @@ const AdminRequestsPage = () => {
       case 'help': return HelpCircle;
       case 'regularization': return Clock;
       case 'password': return Key;
+      case 'expense': return Receipt;
       default: return FileText;
     }
   };
@@ -249,7 +291,13 @@ const AdminRequestsPage = () => {
   };
 
   // Use luxonUtils for consistent timezone display
-  const formatDateLocal = (date: Date | string): string => formatISTDate(date, true);
+  const formatDateLocal = (date: Date | string): string => {
+    try {
+      return formatISTDate(date, { dateOnly: true });
+    } catch (e) {
+      return 'N/A';
+    }
+  };
 
   // Handle editing states
   const handleEdit = (id: string, field: 'status' | 'response', value: string) => {
@@ -299,6 +347,12 @@ const AdminRequestsPage = () => {
           status: editData.status as 'pending' | 'approved' | 'rejected',
           comment: editData.response
         });
+      } else if (request.type === 'expense') {
+        await updateExpenseStatusMutation.mutateAsync({
+          id: request._id,
+          status: editData.status as 'approved' | 'rejected',
+          reviewComment: editData.response
+        });
       }
 
       toast({
@@ -342,7 +396,7 @@ const AdminRequestsPage = () => {
       }
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: `${action} Failed`,
         description: error instanceof Error ? error.message : `Failed to ${action} request.`
       });
@@ -375,7 +429,7 @@ const AdminRequestsPage = () => {
             <BackButton label="Back" variant="ghost" className="w-auto" />
 
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => queryClient.invalidateQueries()}
               variant="outline"
               disabled={loading}
               className="border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
@@ -605,6 +659,12 @@ const AdminRequestsPage = () => {
                                         <SelectItem value="in-progress">In Progress</SelectItem>
                                         <SelectItem value="resolved">Resolved</SelectItem>
                                       </>
+                                    ) : request.type === 'expense' ? (
+                                      <>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="approved">Approved</SelectItem>
+                                        <SelectItem value="rejected">Rejected</SelectItem>
+                                      </>
                                     ) : (
                                       <>
                                         <SelectItem value="pending">Pending</SelectItem>
@@ -615,9 +675,9 @@ const AdminRequestsPage = () => {
                                   </SelectContent>
                                 </Select>
 
-                                {(request.type === 'help' || request.type === 'regularization') && (
+                                {(request.type === 'help' || request.type === 'regularization' || request.type === 'expense') && (
                                   <Input
-                                    placeholder={request.type === 'help' ? "Response message..." : "Review comment..."}
+                                    placeholder={request.type === 'help' ? "Response message..." : request.type === 'expense' ? "Review comment (optional)..." : "Review comment..."}
                                     value={editing[request._id]?.response || ""}
                                     onChange={(e) => handleEdit(request._id, "response", e.target.value)}
                                   />

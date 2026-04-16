@@ -87,6 +87,17 @@ export class AuthorizationError extends APIError {
 }
 
 /**
+ * Forbidden Error (403)
+ * Used when user is authenticated but not allowed to perform the action
+ */
+export class ForbiddenError extends APIError {
+  constructor(message: string = 'Access forbidden') {
+    super(message, 403, 'FORBIDDEN_ERROR');
+    this.name = 'ForbiddenError';
+  }
+}
+
+/**
  * Not Found Error (404)
  * Used when requested resource doesn't exist
  */

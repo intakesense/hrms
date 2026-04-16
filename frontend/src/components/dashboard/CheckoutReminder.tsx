@@ -29,7 +29,7 @@ const CheckoutReminder = ({ missingCheckouts, onRegularizationRequest, onDismiss
   }
 
   // Use centralized utility functions
-  const formatDate = (date: string | Date) => formatISTDate(new Date(date), 'ddd MMM DD, YYYY');
+  const formatDate = (date: string | Date) => formatISTDate(new Date(date), { customFormat: 'EEE MMM dd, yyyy' });
 
   const handleRegularizationClick = (attendance: Attendance) => {
     // Create default check-in and check-out times for the attendance date

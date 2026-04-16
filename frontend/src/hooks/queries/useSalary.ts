@@ -28,10 +28,23 @@ export const useSalaryStructures = (params?: SalaryStructureQueryParams) => {
         API_ENDPOINTS.SALARY_STRUCTURES.GET_ALL,
         params || {}
       );
-      const { data } = await axiosInstance.get<ApiResponse<SalaryStructure[]>>(
+      const { data } = await axiosInstance.get<ApiResponse<{ salaryStructures: SalaryStructure[]; pagination: { currentPage?: number; page?: number; totalPages?: number; totalItems?: number; total?: number; itemsPerPage?: number; limit?: number } }>>(
         endpoint
       );
-      return data.data || [];
+      const responseData = data.data;
+      if (responseData) {
+        const pagination = responseData.pagination || {};
+        return {
+          salaryStructures: responseData.salaryStructures || [],
+          pagination: {
+            page: pagination.currentPage || pagination.page || 1,
+            totalPages: pagination.totalPages || 1,
+            total: pagination.totalItems || pagination.total || 0,
+            limit: pagination.itemsPerPage || pagination.limit || 10
+          }
+        };
+      }
+      return { salaryStructures: [], pagination: { page: 1, totalPages: 1, total: 0, limit: 10 } };
     },
   });
 };

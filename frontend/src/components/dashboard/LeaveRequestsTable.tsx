@@ -15,6 +15,9 @@ interface LeaveRequest extends BaseRequest {
   type: 'leave';
   leaveType?: string;
   leaveDate?: string | Date;
+  startDate?: string | Date;
+  endDate?: string | Date;
+  numberOfDays?: number;
   leaveReason?: string;
   reason?: string;
   description?: string;
@@ -299,9 +302,19 @@ const LeaveRequestsTable = memo<LeaveRequestsTableProps>(({
                     <div className="flex justify-between items-center md:block">
                       <span className="text-xs font-bold text-muted-foreground uppercase md:hidden">Date</span>
                       <span className="text-foreground">
-                        {isValidDate(request.displayDate)
-                          ? new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(request.displayDate!))
-                          : '—'}
+                        {(() => {
+                          const startDate = 'startDate' in request ? request.startDate : undefined;
+                          const endDate = 'endDate' in request ? request.endDate : undefined;
+                          const isMulti = startDate && endDate && isValidDate(startDate) && isValidDate(endDate) && new Date(startDate).toDateString() !== new Date(endDate).toDateString();
+                          if (isMulti) {
+                            const fmt = (d: string | Date) => new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short' }).format(new Date(d));
+                            const numDays = 'numberOfDays' in request ? (request as LeaveRequest).numberOfDays : undefined;
+                            return <>{fmt(startDate!)} – {fmt(endDate!)}{numDays ? <span className="ml-1 text-xs text-muted-foreground">({numDays}d)</span> : null}</>;
+                          }
+                          return isValidDate(request.displayDate)
+                            ? new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(request.displayDate!))
+                            : '—';
+                        })()}
                       </span>
                     </div>
                   </div>

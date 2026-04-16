@@ -450,6 +450,27 @@ export interface IHelp extends Document {
 }
 
 // ============================================================================
+// EXPENSE TYPES
+// ============================================================================
+
+export type ExpenseStatus = 'pending' | 'approved' | 'rejected';
+
+export interface IExpense extends Document {
+  _id: Types.ObjectId;
+  employee: Types.ObjectId;
+  employeeName: string;
+  date: Date;
+  item: string;
+  amount: number;
+  status: ExpenseStatus;
+  reviewComment?: string;
+  approvedBy?: Types.ObjectId;
+  approvedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ============================================================================
 // PASSWORD RESET TYPES
 // ============================================================================
 

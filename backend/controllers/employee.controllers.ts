@@ -280,14 +280,11 @@ export const toggleEmployeeStatus = async (req: IAuthRequest, res: Response): Pr
     employee.isActive = !employee.isActive;
     await employee.save();
 
-    if (!employee.isActive) {
-      const user = await User.findOne({ employeeId: employee.employeeId });
-      if (user) {
-        user.employeeId = undefined;
-        user.employee = undefined;
-        await user.save();
-        logger.info({ email: user.email, employeeId: employee.employeeId }, 'Unlinked user from deactivated employee');
-      }
+    const user = await User.findOne({ employeeId: employee.employeeId });
+    if (user) {
+      user.isActive = employee.isActive;
+      await user.save();
+      logger.info({ email: user.email, isActive: user.isActive }, `User account status synced with employee status`);
     }
 
     res.json(formatResponse(

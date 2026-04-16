@@ -22,4 +22,5 @@ export * from './useNotifications';
 export * from './usePasswordReset';
 export * from './useTaskReports';
 export * from './useDocuments';
+export * from './useExpenses';
 export * from './useGiftGame';

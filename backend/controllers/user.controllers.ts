@@ -63,6 +63,10 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     throw new NotFoundError('User not found');
   }
 
+  if (user.isActive === false) {
+    throw new ValidationError('Account has been deactivated. Please contact HR.');
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
     throw new ValidationError('Invalid credentials');

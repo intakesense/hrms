@@ -139,6 +139,7 @@ import chatRoutes from "./routes/chat.routes.js";
 import officeLocationRoutes from "./routes/officeLocation.js";
 import wfhRequestRoutes from "./routes/wfhRequest.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import expenseRoutes from "./routes/expense.routes.js";
 
 // ============================================================================
 // CHRISTMAS FEATURE - Tetris Game Routes
@@ -205,6 +206,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/office-locations", officeLocationRoutes);
 app.use("/api/wfh-requests", wfhRequestRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/expenses", expenseRoutes);
 app.use("/health", healthRoutes);
 
 // ============================================================================

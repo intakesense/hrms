@@ -102,6 +102,7 @@ interface DashboardAttendanceReport {
         weekend: number;
         holiday: number;
         halfDay: number;
+        leave: number;
     };
 }
 

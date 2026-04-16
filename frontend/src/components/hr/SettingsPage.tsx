@@ -88,7 +88,8 @@ const SettingsPage: React.FC = () => {
                 wfhRequests: true,
                 regularizationRequests: true,
                 helpRequests: true,
-                employeeMilestones: true
+                employeeMilestones: true,
+                expenseRequests: true
             }
         },
         general: {
@@ -192,7 +193,8 @@ const SettingsPage: React.FC = () => {
                     wfhRequests: response.notifications?.hrEmailTypes?.wfhRequests ?? true,
                     regularizationRequests: response.notifications?.hrEmailTypes?.regularizationRequests ?? true,
                     helpRequests: response.notifications?.hrEmailTypes?.helpRequests ?? true,
-                    employeeMilestones: response.notifications?.hrEmailTypes?.employeeMilestones ?? true
+                    employeeMilestones: response.notifications?.hrEmailTypes?.employeeMilestones ?? true,
+                    expenseRequests: response.notifications?.hrEmailTypes?.expenseRequests ?? true
                 }
             },
             general: {

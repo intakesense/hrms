@@ -309,12 +309,12 @@ const SalaryStructureManagement: React.FC<SalaryStructureManagementProps> = ({ o
                                                     </div>
                                                     <div>
                                                         <p className="text-sm text-slate-600 dark:text-slate-400">Position</p>
-                                                        <p className="font-medium text-slate-900 dark:text-slate-100">{empDetails.designation || 'N/A'}</p>
+                                                        <p className="font-medium text-slate-900 dark:text-slate-100">{empDetails.position || 'N/A'}</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-sm text-slate-600 dark:text-slate-400">Joining Date</p>
                                                         <p className="font-medium text-slate-900 dark:text-slate-100">
-                                                            {empDetails.dateOfJoining ? new Date(empDetails.dateOfJoining).toLocaleDateString('en-IN') : 'N/A'}
+                                                            {empDetails.joiningDate ? new Date(empDetails.joiningDate).toLocaleDateString('en-IN') : 'N/A'}
                                                         </p>
                                                     </div>
                                                 </div>

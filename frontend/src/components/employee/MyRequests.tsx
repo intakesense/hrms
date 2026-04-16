@@ -8,7 +8,10 @@ import {
   User,
   Clock4,
   MapPin,
-  RefreshCw
+  RefreshCw,
+  Download,
+  IndianRupee,
+  Receipt
 } from 'lucide-react';
 import { Card, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
@@ -19,6 +22,7 @@ import BackButton from "../ui/BackButton";
 import LeaveRequestModal from "../LeaveRequestModal";
 import HelpDeskModal from "../HelpDeskModal";
 import RegularizationModal from "../dashboard/RegularizationModal";
+import ExpenseModal from "../ExpenseModal";
 import { formatTime, formatISTDate } from '../../utils/luxonUtils';
 import {
   useMyLeaves,
@@ -27,10 +31,13 @@ import {
   useAllHelpInquiries,
   useMyRegularizations,
   useRegularizationRequests,
-  useMyWFHRequests,
   useWFHRequests,
+  useMyWFHRequests,
   useRequestLeave,
-  useSubmitHelpInquiry
+  useSubmitHelpInquiry,
+  useMyExpenses,
+  useAllExpenses,
+  useCreateExpense
 } from '@/hooks/queries';
 import type { LucideIcon } from 'lucide-react';
 
@@ -44,7 +51,7 @@ interface Tab {
 // Unified request type for the UI
 interface UnifiedRequest {
   _id: string;
-  type: 'leave' | 'help' | 'regularization' | 'wfh' | 'password';
+  type: 'leave' | 'help' | 'regularization' | 'wfh' | 'password' | 'expense';
   title: string;
   description: string;
   date: Date;
@@ -61,10 +68,11 @@ interface UnifiedRequest {
 
 // Type for leave request submission
 interface LeaveRequestData {
+  leaveMode: 'single' | 'multi';
   leaveType: string;
-  leaveDate: string;
-  leaveReason?: string;
-  [key: string]: unknown;
+  startDate: string;
+  endDate: string;
+  reason: string;
 }
 
 // Type for help inquiry submission
@@ -90,6 +98,7 @@ const MyRequests = () => {
   const [showLeaveModal, setShowLeaveModal] = useState<boolean>(false);
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
   const [showRegularizationModal, setShowRegularizationModal] = useState<boolean>(false);
+  const [showExpenseModal, setShowExpenseModal] = useState<boolean>(false);
 
   const user = useAuth();
   const { toast } = useToast();
@@ -100,7 +109,8 @@ const MyRequests = () => {
     { id: 'leave', label: 'Leave Requests', icon: Calendar },
     { id: 'help', label: 'Help Desk', icon: HelpCircle },
     { id: 'regularization', label: 'Regularization', icon: Clock },
-    { id: 'wfh', label: 'WFH Requests', icon: MapPin }
+    { id: 'wfh', label: 'WFH Requests', icon: MapPin },
+    { id: 'expense', label: 'Expenses', icon: Receipt }
   ];
 
   // Fetch data using React Query hooks
@@ -108,6 +118,7 @@ const MyRequests = () => {
   const shouldFetchHelp = activeTab === 'all' || activeTab === 'help';
   const shouldFetchReg = activeTab === 'all' || activeTab === 'regularization';
   const shouldFetchWFH = activeTab === 'all' || activeTab === 'wfh';
+  const shouldFetchExpense = activeTab === 'all' || activeTab === 'expense';
 
   const { data: leaveData = [], isLoading: leavesLoading, refetch: refetchLeaves } = isAdminOrHR
     ? useAllLeaves({ enabled: shouldFetchLeaves })
@@ -124,8 +135,12 @@ const MyRequests = () => {
   const { data: wfhData = [], isLoading: wfhLoading, refetch: refetchWFH } = isAdminOrHR
     ? useWFHRequests({ enabled: shouldFetchWFH })
     : useMyWFHRequests({ enabled: shouldFetchWFH });
+  
+  const { data: expenseData = [], isLoading: expenseLoading, refetch: refetchExpense } = isAdminOrHR
+    ? useAllExpenses(undefined, { enabled: shouldFetchExpense })
+    : useMyExpenses({ enabled: shouldFetchExpense });
 
-  const loading = leavesLoading || helpLoading || regLoading || wfhLoading;
+  const loading = leavesLoading || helpLoading || regLoading || wfhLoading || expenseLoading;
 
   // Mutations for submitting requests
   const requestLeaveMutation = useRequestLeave();
@@ -137,6 +152,7 @@ const MyRequests = () => {
     if (shouldFetchHelp) refetchHelp();
     if (shouldFetchReg) refetchReg();
     if (shouldFetchWFH) refetchWFH();
+    if (shouldFetchExpense) refetchExpense();
   };
 
   // Process and combine all requests
@@ -230,9 +246,27 @@ const MyRequests = () => {
       allRequests.push(...formattedWFH);
     }
 
+    // Process Expense requests
+    if (shouldFetchExpense && expenseData) {
+      const expenseArray = Array.isArray(expenseData) ? expenseData : (expenseData as { expenses?: unknown[] }).expenses || [];
+      const formattedExpense: UnifiedRequest[] = (expenseArray as Record<string, unknown>[]).map((exp): UnifiedRequest => ({
+        ...exp,
+        _id: (exp._id as string) || '',
+        type: 'expense' as const,
+        title: `Expense: ${exp.item || 'Reimbursement'}`,
+        description: `Amount: ₹${Number(exp.amount || 0).toLocaleString()}`,
+        date: new Date((exp.date as string) || (exp.createdAt as string) || Date.now()),
+        createdAt: new Date((exp.createdAt as string) || Date.now()),
+        status: (exp.status as 'pending' | 'approved' | 'rejected') || 'pending',
+        reviewComment: exp.reviewComment as string | undefined,
+        user: exp.user as { name?: string; email?: string } | undefined
+      }));
+      allRequests.push(...formattedExpense);
+    }
+
     // Sort by most recent first
     return allRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [leaveData, helpData, regData, wfhData, shouldFetchLeaves, shouldFetchHelp, shouldFetchReg, shouldFetchWFH]);
+  }, [leaveData, helpData, regData, wfhData, expenseData, shouldFetchLeaves, shouldFetchHelp, shouldFetchReg, shouldFetchWFH, shouldFetchExpense]);
 
   const getTypeIcon = (type: UnifiedRequest['type']): LucideIcon => {
     switch (type) {
@@ -240,6 +274,7 @@ const MyRequests = () => {
       case 'help': return HelpCircle;
       case 'regularization': return Clock;
       case 'wfh': return MapPin;
+      case 'expense': return Receipt;
       case 'password': return Key;
       default: return FileText;
     }
@@ -255,7 +290,7 @@ const MyRequests = () => {
   };
 
   // Use luxonUtils for consistent timezone display
-  const formatDateLocal = (date: Date): string => formatISTDate(date, 'dd-MM-yy');
+  const formatDateLocal = (date: Date): string => formatISTDate(date, { customFormat: 'dd-MM-yy' });
   const formatTimeLocal = (date: Date): string => formatTime(date);
 
   const handleNewRequest = (type: 'leave' | 'help' | 'regularization'): void => {
@@ -288,7 +323,7 @@ const MyRequests = () => {
     } catch (error) {
       console.error("Leave request error:", error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Leave Request Failed",
         description: error instanceof Error ? error.message : "Failed to submit leave request."
       });
@@ -317,9 +352,29 @@ const MyRequests = () => {
     } catch (error) {
       console.error("Help inquiry error:", error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Submission Failed",
         description: error instanceof Error ? error.message : "Failed to submit help inquiry."
+      });
+    }
+  };
+
+  const createExpenseMutation = useCreateExpense();
+  const handleExpenseSubmit = async (data: { date: string; item: string; amount: number }) => {
+    try {
+      await createExpenseMutation.mutateAsync(data);
+      toast({
+        variant: "success",
+        title: "Expense Submitted",
+        description: "Your expense reimbursement request has been submitted successfully."
+      });
+      setShowExpenseModal(false);
+      loadRequests();
+    } catch (error: any) {
+      toast({
+        variant: "error",
+        title: "Submission Failed",
+        description: error.response?.data?.message || "Failed to submit expense."
       });
     }
   };
@@ -379,6 +434,13 @@ const MyRequests = () => {
               >
                 <Clock className="h-4 w-4 mr-2" />
                 Regularization
+              </Button>
+              <Button
+                onClick={() => setShowExpenseModal(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+              >
+                <IndianRupee className="h-4 w-4 mr-2" />
+                New Expense
               </Button>
             </div>
           </div>
@@ -447,6 +509,7 @@ const MyRequests = () => {
                               request.type === 'leave' ? 'text-slate-600 dark:text-slate-400' :
                               request.type === 'help' ? 'text-slate-600 dark:text-slate-400' :
                               request.type === 'regularization' ? 'text-slate-600 dark:text-slate-400' :
+                              request.type === 'expense' ? 'text-slate-600 dark:text-slate-400' :
                               'text-slate-600 dark:text-slate-400'
                             }`} />
                           </div>
@@ -478,7 +541,7 @@ const MyRequests = () => {
                           {request.type === 'regularization' && (
                             <div className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 px-2 py-1 rounded">
                               <span className="font-medium">Attendance Date:</span> {formatDateLocal(request.date)} |
-                              <span className="font-medium ml-2">Request Submitted:</span> {formatISTDate(new Date(request.createdAt), 'dd-MM-yy')}
+                              <span className="font-medium ml-2">Request Submitted:</span> {formatISTDate(new Date(request.createdAt), { customFormat: 'dd-MM-yy' })}
                             </div>
                           )}
                           {isAdminOrHR && request.user && (
@@ -530,6 +593,13 @@ const MyRequests = () => {
           });
           loadRequests();
         }}
+      />
+
+      <ExpenseModal
+        isOpen={showExpenseModal}
+        onClose={() => setShowExpenseModal(false)}
+        onSubmit={handleExpenseSubmit}
+        isLoading={createExpenseMutation.isPending}
       />
     </div>
   );

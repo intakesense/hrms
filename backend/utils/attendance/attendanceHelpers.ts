@@ -274,7 +274,7 @@ export const buildStatusSpecificRecord = async (
  */
 export const buildAttendanceMaps = (
   attendanceRecords: AttendanceRecord[],
-  approvedLeaves: Array<{ employeeId: string; leaveDate: Date }>
+  approvedLeaves: Array<{ employee: any; startDate: Date; endDate: Date }>
 ): {
   attendanceMap: Map<string, Map<string, AttendanceRecord>>;
   leaveMap: Map<string, Set<string>>;
@@ -294,15 +294,21 @@ export const buildAttendanceMaps = (
   });
 
   // Create leave map grouped by employee and date
+  // For multi-day leaves, generate entries for each day in the range
   const leaveMap = new Map<string, Set<string>>();
   approvedLeaves.forEach(leave => {
-    const empId = leave.employeeId;
-    const dateKey = getISTDateString(leave.leaveDate);
+    const empId = leave.employee?._id?.toString() || leave.employee?.toString();
+    if (!empId) return;
 
-    if (!leaveMap.has(empId)) {
-      leaveMap.set(empId, new Set());
+    const start = new Date(leave.startDate);
+    const end = new Date(leave.endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateKey = getISTDateString(new Date(d));
+      if (!leaveMap.has(empId)) {
+        leaveMap.set(empId, new Set());
+      }
+      leaveMap.get(empId)!.add(dateKey);
     }
-    leaveMap.get(empId)!.add(dateKey);
   });
 
   return { attendanceMap, leaveMap };
@@ -324,12 +330,17 @@ export const buildSimpleAttendanceMap = (attendanceRecords: AttendanceRecord[]):
  * Create simple leave lookup map for single employee operations
  */
 export const buildSimpleLeaveMap = (
-  approvedLeaves: Array<{ leaveDate: Date }>
-): Map<string, { leaveDate: Date }> => {
-  const leaveMap = new Map<string, { leaveDate: Date }>();
+  approvedLeaves: Array<{ startDate: Date; endDate: Date }>
+): Map<string, { startDate: Date; endDate: Date }> => {
+  const leaveMap = new Map<string, { startDate: Date; endDate: Date }>();
   approvedLeaves.forEach(leave => {
-    const dateKey = getISTDateString(leave.leaveDate);
-    leaveMap.set(dateKey, leave);
+    // For multi-day leaves, generate entries for each day in the range
+    const start = new Date(leave.startDate);
+    const end = new Date(leave.endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateKey = getISTDateString(new Date(d));
+      leaveMap.set(dateKey, leave);
+    }
   });
   return leaveMap;
 };
@@ -410,9 +421,8 @@ export const calculateAttendanceStats = (
         stats.present++;
         break;
       case ATTENDANCE_STATUS.ABSENT:
-        // Count as absent if it's a working day absence (including leave days)
-        // Don't count weekends and holidays as absences in statistics
-        if (!record.flags?.isWeekend && !record.flags?.isHoliday) {
+        // Don't count weekends, holidays, or approved leaves as absences
+        if (!record.flags?.isWeekend && !record.flags?.isHoliday && !record.flags?.isLeave) {
           stats.absent++;
         }
         break;

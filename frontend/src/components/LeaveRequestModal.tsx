@@ -1,10 +1,13 @@
-import { useState, FormEvent, ChangeEvent } from "react";
-import { X, ChevronDown } from "lucide-react";
-import type { LeaveType } from "@/types";
+import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { X, ChevronDown, CalendarDays, CalendarRange, Info } from "lucide-react";
+import type { LeaveType, LeaveMode } from "@/types";
+import { usePreviewLeaveDays } from "@/hooks/queries/useLeaves";
 
 interface LeaveRequestData {
+  leaveMode: LeaveMode;
   leaveType: LeaveType;
-  date: string;
+  startDate: string;
+  endDate: string;
   reason: string;
 }
 
@@ -16,15 +19,44 @@ interface LeaveRequestModalProps {
 }
 
 const LeaveRequestModal = ({ isOpen, onClose, onSubmit, isLoading }: LeaveRequestModalProps) => {
+  const [leaveMode, setLeaveMode] = useState<LeaveMode>("single");
   const [leaveType, setLeaveType] = useState<LeaveType>("full-day");
-  const [date, setDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
+
+  // Preview hook — only active in multi mode with valid dates
+  const { data: preview, isLoading: previewLoading } = usePreviewLeaveDays(
+    leaveMode === 'multi' ? startDate : '',
+    leaveMode === 'multi' ? endDate : ''
+  );
+
+  // When switching to single mode, sync endDate with startDate
+  useEffect(() => {
+    if (leaveMode === "single") {
+      setEndDate(startDate);
+      setLeaveType("full-day"); // reset type when switching
+    }
+  }, [leaveMode, startDate]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit({ leaveType, date, reason });
+    onSubmit({
+      leaveMode,
+      leaveType: leaveMode === "multi" ? "full-day" : leaveType,
+      startDate,
+      endDate: leaveMode === "single" ? startDate : endDate,
+      reason,
+    });
+  };
+
+  const isFormValid = () => {
+    if (!startDate) return false;
+    if (leaveMode === "multi" && (!endDate || startDate > endDate)) return false;
+    if (leaveMode === "multi" && preview && preview.workingDays === 0) return false;
+    return true;
   };
 
   return (
@@ -42,36 +74,136 @@ const LeaveRequestModal = ({ isOpen, onClose, onSubmit, isLoading }: LeaveReques
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Leave Mode Toggle */}
           <div>
-            <label htmlFor="leaveType" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Leave Type</label>
-            <div className="relative">
-              <select
-                id="leaveType"
-                value={leaveType}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value as LeaveType)}
-                className="w-full appearance-none bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5 pr-8"
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Leave Duration</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setLeaveMode("single")}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
+                  leaveMode === "single"
+                    ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-400 shadow-sm"
+                    : "border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-500"
+                }`}
               >
-                <option value="full-day">Full Day</option>
-                <option value="half-day">Half Day</option>
-              </select>
-              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 pointer-events-none" />
+                <CalendarDays size={16} />
+                Single Day
+              </button>
+              <button
+                type="button"
+                onClick={() => setLeaveMode("multi")}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
+                  leaveMode === "multi"
+                    ? "border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-400 shadow-sm"
+                    : "border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:border-gray-300 dark:hover:border-slate-500"
+                }`}
+              >
+                <CalendarRange size={16} />
+                Multi Day
+              </button>
             </div>
           </div>
 
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
-            <input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5"
-              required
-            />
-          </div>
+          {/* Leave Type — single mode only */}
+          {leaveMode === "single" && (
+            <div>
+              <label htmlFor="leaveType" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Leave Type</label>
+              <div className="relative">
+                <select
+                  id="leaveType"
+                  value={leaveType}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setLeaveType(e.target.value as LeaveType)}
+                  className="w-full appearance-none bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5 pr-8"
+                >
+                  <option value="full-day">Full Day</option>
+                  <option value="half-day">Half Day</option>
+                </select>
+                <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          )}
+
+          {/* Date Pickers */}
+          {leaveMode === "single" ? (
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
+              <input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5"
+                required
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="multiStartDate" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Start Date</label>
+                <input
+                  id="multiStartDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setStartDate(e.target.value);
+                    // If end date is before new start date, reset it
+                    if (endDate && e.target.value > endDate) {
+                      setEndDate(e.target.value);
+                    }
+                  }}
+                  className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="multiEndDate" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">End Date</label>
+                <input
+                  id="multiEndDate"
+                  type="date"
+                  value={endDate}
+                  min={startDate || undefined}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Working Days Preview — multi mode only */}
+          {leaveMode === "multi" && startDate && endDate && startDate <= endDate && (
+            <div className="rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20 p-3">
+              {previewLoading ? (
+                <div className="flex items-center gap-2 text-sm text-cyan-700 dark:text-cyan-300">
+                  <div className="animate-spin h-4 w-4 border-2 border-cyan-500 border-t-transparent rounded-full" />
+                  Calculating working days...
+                </div>
+              ) : preview ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Info size={16} className="text-cyan-600 dark:text-cyan-400 flex-shrink-0" />
+                    <span className="text-sm font-semibold text-cyan-800 dark:text-cyan-200">
+                      {preview.workingDays} working day{preview.workingDays !== 1 ? 's' : ''} will be deducted
+                    </span>
+                  </div>
+                  {preview.excludedDays > 0 && (
+                    <p className="text-xs text-cyan-600 dark:text-cyan-400 ml-6">
+                      Excludes{' '}
+                      {[
+                        preview.breakdown.sundays > 0 && `${preview.breakdown.sundays} Sunday${preview.breakdown.sundays !== 1 ? 's' : ''}`,
+                        preview.breakdown.saturdayHolidays > 0 && `${preview.breakdown.saturdayHolidays} Saturday holiday${preview.breakdown.saturdayHolidays !== 1 ? 's' : ''}`,
+                        preview.breakdown.holidays > 0 && `${preview.breakdown.holidays} public holiday${preview.breakdown.holidays !== 1 ? 's' : ''}`,
+                      ].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Reason <span className="text-gray-400 font-normal">(min 10 characters)</span></label>
+            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Reason <span className="text-gray-400 font-normal">(optional)</span></label>
             <textarea
               id="reason"
               value={reason}
@@ -79,8 +211,6 @@ const LeaveRequestModal = ({ isOpen, onClose, onSubmit, isLoading }: LeaveReques
               placeholder="Provide a brief reason for your leave..."
               rows={4}
               className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 text-gray-900 dark:text-slate-100 text-sm rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 block p-2.5"
-              required
-              minLength={10}
               maxLength={500}
               data-gramm="false"
             />
@@ -97,7 +227,7 @@ const LeaveRequestModal = ({ isOpen, onClose, onSubmit, isLoading }: LeaveReques
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid()}
               className="px-5 py-2.5 text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:bg-cyan-500 dark:hover:bg-cyan-600 dark:focus:ring-cyan-700 rounded-lg transition-colors disabled:opacity-70"
             >
               {isLoading ? "Submitting..." : "Submit Request"}
