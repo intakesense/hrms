@@ -398,12 +398,12 @@ const SalarySlipForm: React.FC<SalarySlipFormProps> = ({ employeeId: propEmploye
                     lastName: employeeDetails.lastName || employeeDetails.name?.split(' ').slice(1).join(' ') || '',
                     employeeId: employeeDetails.employeeId,
                     department: employeeDetails.department,
-                    position: employeeDetails.position || employeeDetails.designation,
+                    position: employeeDetails.position,
                     email: employeeDetails.email,
                     bankName: employeeDetails.bankDetails?.bankName,
                     bankAccountNumber: employeeDetails.bankDetails?.accountNumber,
                     panNumber: employeeDetails.bankDetails?.panNumber || employeeDetails.govtId?.pan,
-                    joiningDate: employeeDetails.dateOfJoining
+                    joiningDate: employeeDetails.joiningDate
                 }
             };
 
@@ -412,11 +412,11 @@ const SalarySlipForm: React.FC<SalarySlipFormProps> = ({ employeeId: propEmploye
                 lastName: employeeDetails.lastName || employeeDetails.name?.split(' ').slice(1).join(' ') || '',
                 companyName: employeeDetails.companyName,
                 department: employeeDetails.department,
-                position: employeeDetails.position || employeeDetails.designation,
+                position: employeeDetails.position,
                 bankName: employeeDetails.bankDetails?.bankName,
                 bankAccountNumber: employeeDetails.bankDetails?.accountNumber,
                 panNumber: employeeDetails.bankDetails?.panNumber || employeeDetails.govtId?.pan,
-                joiningDate: employeeDetails.dateOfJoining
+                joiningDate: employeeDetails.joiningDate
             });
 
             toast({
@@ -573,7 +573,7 @@ const SalarySlipForm: React.FC<SalarySlipFormProps> = ({ employeeId: propEmploye
                                             </div>
                                             <div className="bg-slate-50 dark:bg-slate-600 p-3 rounded-lg">
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">Position</p>
-                                                <p className="font-medium text-slate-900 dark:text-slate-100">{employeeDetails.position || employeeDetails.designation || 'N/A'}</p>
+                                                <p className="font-medium text-slate-900 dark:text-slate-100">{employeeDetails.position || 'N/A'}</p>
                                             </div>
                                             <div className="bg-slate-50 dark:bg-slate-600 p-3 rounded-lg">
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">Bank Name</p>
@@ -585,7 +585,7 @@ const SalarySlipForm: React.FC<SalarySlipFormProps> = ({ employeeId: propEmploye
                                                 <p className="text-sm text-slate-600 dark:text-slate-400">Joining Date</p>
                                                 <p className="font-medium text-slate-900 dark:text-slate-100">
                                                     {(() => {
-                                                        const joiningDate = employeeDetails.joiningDate || employeeDetails.dateOfJoining;
+                                                        const joiningDate = employeeDetails.joiningDate;
                                                         return joiningDate ? new Date(joiningDate).toLocaleDateString('en-IN') : 'N/A';
                                                     })()}
                                                 </p>
@@ -1084,7 +1084,7 @@ const SalarySlipForm: React.FC<SalarySlipFormProps> = ({ employeeId: propEmploye
                                                 </div>
                                                 <div>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">Position</p>
-                                                    <p className="font-semibold text-slate-900 dark:text-slate-100">{employeeDetails?.position || employeeDetails?.designation || '-'}</p>
+                                                    <p className="font-semibold text-slate-900 dark:text-slate-100">{employeeDetails?.position || '-'}</p>
                                                 </div>
                                             </div>
 

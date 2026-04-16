@@ -18,6 +18,7 @@ import type {
   TaskReportQueryParams,
   PasswordResetQueryParams,
   WFHRequestQueryParams,
+  ExpenseQueryParams,
 } from '@/types';
 
 export const queryKeys = {
@@ -54,6 +55,13 @@ export const queryKeys = {
     all: () => ['leaves'] as const,
     myLeaves: () => ['leaves', 'my-leaves'] as const,
     allLeaves: () => ['leaves', 'all-leaves'] as const,
+  },
+
+  // Expenses
+  expenses: {
+    all: () => ['expenses'] as const,
+    myExpenses: () => ['expenses', 'my-expenses'] as const,
+    allExpenses: (params?: ExpenseQueryParams) => ['expenses', 'all-expenses', params] as const,
   },
 
   // WFH Requests

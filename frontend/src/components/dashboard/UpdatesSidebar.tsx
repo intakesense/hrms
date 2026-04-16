@@ -3,6 +3,7 @@ import { Bell, Calendar, FileText, Shield } from "lucide-react";
 import PolicyModal from "../ui/PolicyModal";
 import AnnouncementModal from "../ui/AnnouncementModal";
 import { useActivePolicies } from "@/hooks/queries";
+import { formatISTDate } from "@/utils/luxonUtils";
 
 interface Policy {
   _id: string;
@@ -177,7 +178,7 @@ const UpdatesSidebar = ({
                     <div key={holiday.id || `holiday-${index}`} className="p-2.5 sm:p-3.5 flex justify-between items-center hover:bg-muted rounded-lg transition-colors duration-200 shadow-sm border border-transparent hover:border-border">
                       <div>
                         <h4 className="font-semibold text-foreground text-xs sm:text-sm">{holiday.name}</h4>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">{holiday.date}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{formatISTDate(holiday.date, { customFormat: 'dd MMM yyyy, EEEE' })}</p>
                       </div>
                       <div className="bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 p-2 sm:p-2.5 rounded-full shadow-sm">
                         <Calendar size={16} />
@@ -218,7 +219,7 @@ const UpdatesSidebar = ({
                         </p>
                         <div className="flex justify-between items-center">
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            {new Date(announcement.createdAt || announcement.date || '').toLocaleDateString()}
+                            {formatISTDate(announcement.createdAt || announcement.date, { customFormat: 'dd MMM yyyy' })}
                           </p>
                           {(announcement.authorName || announcement.author?.name) && (
                             <span className="text-[10px] sm:text-xs text-muted-foreground">

@@ -57,7 +57,8 @@ class NotificationService {
         'wfh_request': 'wfhRequests',
         'regularization_request': 'regularizationRequests',
         'help_request': 'helpRequests',
-        'employee_milestone': 'employeeMilestones'
+        'employee_milestone': 'employeeMilestones',
+        'expense_request': 'expenseRequests'
       };
 
       const emailTypeKey = emailTypeMap[type];

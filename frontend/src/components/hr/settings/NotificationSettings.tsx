@@ -322,7 +322,8 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                         { key: 'wfhRequests', label: 'Work From Home Requests', desc: 'Notifications when employees request to work from home' },
                         { key: 'regularizationRequests', label: 'Regularization Requests', desc: 'Notifications for attendance regularization requests' },
                         { key: 'helpRequests', label: 'Help Requests', desc: 'Notifications when employees need assistance' },
-                        { key: 'employeeMilestones', label: 'Employee Milestones', desc: 'Work anniversary notifications' }
+                        { key: 'employeeMilestones', label: 'Employee Milestones', desc: 'Work anniversary notifications' },
+                        { key: 'expenseRequests', label: 'Expense Requests', desc: 'Notifications for employee reimbursement claims' }
                     ].map(type => (
                         <div key={type.key} className="flex items-center justify-between">
                             <div>

@@ -1,8 +1,9 @@
 import { useState, ChangeEvent, FormEvent } from 'react';
 import useAuth from '../../hooks/authjwt';
 import notificationService from '../../service/notificationService';
-import { PlusCircle, Edit3, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { PlusCircle, Edit3, Trash2, AlertTriangle, CheckCircle, XCircle, Calendar } from 'lucide-react';
 import { useHolidays, useCreateHoliday, useUpdateHoliday, useDeleteHoliday } from '@/hooks/queries';
+import { formatISTDate } from '@/utils/luxonUtils';
 import type { Holiday, User } from '@/types';
 
 interface Message {
@@ -55,10 +56,11 @@ const HolidaysPage = (): JSX.Element => {
     }));
   };
 
-  // Format date to YYYY-MM-DD for date input
+  // Format date to YYYY-MM-DD for date input (IST-safe)
   const formatDateForInput = (dateString: string): string => {
     if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
+    // Use slice to extract YYYY-MM-DD from ISO string without UTC conversion
+    return dateString.slice(0, 10);
   };
 
   const openAddModal = (): void => {
@@ -196,7 +198,8 @@ const HolidaysPage = (): JSX.Element => {
 
       {loading && <div className="text-center text-slate-500 dark:text-slate-400 py-4">Refreshing data...</div>}
 
-      <div className="w-full">
+      {/* Desktop Table */}
+      <div className="hidden md:block w-full overflow-x-auto">
         <table className="w-full text-xs sm:text-sm divide-y divide-slate-200 dark:divide-slate-700">
           <thead className="bg-slate-50 dark:bg-slate-700">
             <tr>
@@ -232,15 +235,11 @@ const HolidaysPage = (): JSX.Element => {
             ) : (
               holidays.map((holiday) => (
                 <tr key={holiday._id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-200">
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-200 font-medium">
                     {holiday.title}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-200">
-                    {new Date(holiday.date).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: '2-digit',
-                    })}
+                    {formatISTDate(holiday.date, { customFormat: 'dd MMM yyyy, EEE' })}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
@@ -277,6 +276,64 @@ const HolidaysPage = (): JSX.Element => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {holidays.length === 0 && !loading ? (
+          <div className="py-10 text-center text-slate-500 dark:text-slate-400">
+            No holidays found.
+          </div>
+        ) : (
+          holidays.map((holiday) => (
+            <div
+              key={holiday._id}
+              className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 border border-slate-200 dark:border-slate-600"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">
+                    {holiday.title}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <Calendar size={12} className="flex-shrink-0" />
+                    <span>{formatISTDate(holiday.date, { customFormat: 'dd MMM yyyy, EEEE' })}</span>
+                  </div>
+                </div>
+                <span
+                  className={`ml-2 flex-shrink-0 px-2 py-0.5 text-[10px] font-semibold rounded-full ${
+                    holiday.isOptional
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-100'
+                  }`}
+                >
+                  {holiday.isOptional ? 'Optional' : 'Public'}
+                </span>
+              </div>
+              {holiday.description && (
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                  {holiday.description}
+                </p>
+              )}
+              {canManageHolidays && (
+                <div className="flex justify-end items-center gap-3 mt-3 pt-2 border-t border-slate-200 dark:border-slate-600">
+                  <button
+                    onClick={() => openEditModal(holiday)}
+                    className="flex items-center gap-1 text-xs text-cyan-600 hover:text-cyan-800 dark:text-cyan-400 dark:hover:text-cyan-300 transition-colors"
+                  >
+                    <Edit3 size={14} /> Edit
+                  </button>
+                  <button
+                    onClick={() => openDeleteConfirm(holiday)}
+                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
 
       {/* Add/Edit Modal */}
@@ -377,7 +434,7 @@ const HolidaysPage = (): JSX.Element => {
             <h3 className="text-lg font-semibold mb-2 text-slate-800 dark:text-slate-100">Confirm Deletion</h3>
             <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
               Are you sure you want to delete the holiday "<strong>{holidayToDelete.title}</strong>" on{' '}
-              {new Date(holidayToDelete.date).toLocaleDateString()}?
+              {formatISTDate(holidayToDelete.date, { customFormat: 'dd MMM yyyy' })}?
             </p>
             {message.content && message.type === 'error' && (
               <div className="mb-3 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md flex items-center text-sm">

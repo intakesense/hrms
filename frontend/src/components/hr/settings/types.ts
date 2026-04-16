@@ -35,6 +35,7 @@ export interface HrEmailTypes {
     regularizationRequests: boolean;
     helpRequests: boolean;
     employeeMilestones: boolean;
+    expenseRequests: boolean;
 }
 
 export interface DailyHrReportSettings {

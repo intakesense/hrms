@@ -408,16 +408,25 @@ export class AttendanceDataService {
     const { startOfDay: startBoundary } = getISTDayBoundaries(startDate);
     const { endOfDay: endBoundary } = getISTDayBoundaries(endDate);
 
+    // Use overlapping date range query: leave overlaps [start, end] if
+    // leave.startDate <= endBoundary AND leave.endDate >= startBoundary
     const filter: FilterQuery<ILeave> = {
       status: 'approved',
-      leaveDate: { $gte: startBoundary.toJSDate(), $lte: endBoundary.toJSDate() }
+      startDate: { $lte: endBoundary.toJSDate() },
+      endDate: { $gte: startBoundary.toJSDate() }
     };
 
     if (employeeId) {
-      filter.employeeId = employeeId;
+      // Leave model stores `employee` as ObjectId, not `employeeId` string
+      const emp = await Employee.findOne({ employeeId }).select('_id');
+      if (emp) {
+        filter.employee = emp._id;
+      } else {
+        return []; // Employee not found → no leaves
+      }
     }
 
-    return await Leave.find(filter);
+    return await Leave.find(filter).populate('employee', 'firstName lastName employeeId');
   }
 
   /**
@@ -510,10 +519,11 @@ export class AttendanceDataService {
     }, {} as Record<string, string>);
 
     const approvedLeaves = await Leave.find({
-      employeeId: { $in: Object.values(employeeIdMapping) },
+      employee: { $in: employeeIds },
       status: 'approved',
-      leaveDate: { $gte: startBoundary.toJSDate(), $lte: endBoundary.toJSDate() }
-    });
+      startDate: { $lte: endBoundary.toJSDate() },
+      endDate: { $gte: startBoundary.toJSDate() }
+    }).populate('employee', 'firstName lastName employeeId');
 
     // Get holidays
     const holidayMap = await this.getHolidaysInRange(startBoundary.toJSDate(), endBoundary.toJSDate());

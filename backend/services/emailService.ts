@@ -450,6 +450,73 @@ class EmailService {
         `)
       }),
 
+      expense_request: () => ({
+        subject: `New Expense Reimbursement Request - ${data.employee as string}`,
+        htmlContent: this.getBaseEmailTemplate(`
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 24px;">💰</span>
+            </div>
+            <h2 style="color: #1e293b; margin: 0; font-size: 24px; font-weight: 700;">Expense Reimbursement Request</h2>
+            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 16px;">New submission from employee</p>
+          </div>
+
+          ${this.getInfoCard([
+            { label: 'Employee', value: data.employee as string },
+            { label: 'Employee ID', value: data.employeeId as string },
+            { label: 'Item/Description', value: data.item as string },
+            { label: 'Amount', value: `₹${Number(data.amount || 0).toLocaleString()}` },
+            { label: 'Date', value: new Date(data.date as string).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }
+          ])}
+
+          <div style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 8px; padding: 15px; margin: 20px 0; border-left: 4px solid #10b981;">
+            <p style="margin: 0; color: #065f46; font-size: 14px; font-weight: 500;">
+              💵 A new expense has been submitted for your review and approval.
+            </p>
+          </div>
+
+          ${this.getActionButton('Review Expense', '#10b981')}
+        `)
+      }),
+
+      expense_status_update: () => ({
+        subject: `Expense Request ${data.status ? (data.status as string).charAt(0).toUpperCase() + (data.status as string).slice(1) : 'Update'}`,
+        htmlContent: this.getBaseEmailTemplate(`
+          <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 24px;">🧾</span>
+            </div>
+            <h2 style="color: #1e293b; margin: 0; font-size: 24px; font-weight: 700;">Expense Request Update</h2>
+            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 16px;">Reimbursement status update</p>
+          </div>
+
+          <div style="text-align: center; margin: 25px 0;">
+            <p style="color: #475569; font-size: 18px; margin: 0 0 10px 0;">Your expense request has been</p>
+            <div style="margin: 10px 0;">
+              ${this.getStatusBadge(data.status as string)}
+            </div>
+          </div>
+
+          ${this.getInfoCard([
+            { label: 'Item', value: data.item as string },
+            { label: 'Amount', value: `₹${Number(data.amount || 0).toLocaleString()}` },
+            { label: 'Status', value: data.status as string }
+          ])}
+
+          <div style="background: ${data.status === 'approved' ? '#ecfdf5' : data.status === 'rejected' ? '#fef2f2' : '#fefbeb'}; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid ${data.status === 'approved' ? '#10b981' : data.status === 'rejected' ? '#ef4444' : '#f59e0b'}; text-align: center;">
+            <p style="margin: 0; color: ${data.status === 'approved' ? '#065f46' : data.status === 'rejected' ? '#991b1b' : '#92400e'}; font-size: 16px; font-weight: 500;">
+              ${data.status === 'approved' ? '✅ Your expense reimbursement has been approved!' : data.status === 'rejected' ? '❌ Your expense request was not approved' : '⏳ Your request is under review'}
+            </p>
+            ${data.comment ? `
+              <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid ${data.status === 'approved' ? '#a7f3d0' : data.status === 'rejected' ? '#fca5a5' : '#fed7aa'};">
+                <p style="margin: 0; color: ${data.status === 'approved' ? '#047857' : data.status === 'rejected' ? '#7f1d1d' : '#78350f'}; font-size: 14px; font-weight: 500;">Admin Comment:</p>
+                <p style="margin: 5px 0 0 0; color: ${data.status === 'approved' ? '#065f46' : data.status === 'rejected' ? '#991b1b' : '#92400e'}; font-size: 14px;">${data.comment as string}</p>
+              </div>
+            ` : ''}
+          </div>
+        `)
+      }),
+
       wfh_request: () => ({
         subject: `Work From Home Request - ${data.employee as string}`,
         htmlContent: this.getBaseEmailTemplate(`

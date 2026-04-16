@@ -29,7 +29,6 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     rollupOptions: {
       treeshake: {
-        moduleSideEffects: false,
         propertyReadSideEffects: false,
         tryCatchDeoptimization: false
       },
@@ -41,13 +40,13 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // 🚀 PHASE 2 OPTIMIZATION: Enhanced code splitting for better performance
           // Core React libraries - loaded immediately
-          'react-vendor': ['react', 'react-dom'],
+          // 'react-vendor': ['react', 'react-dom'],
           // Router - loaded when navigating
           'router-vendor': ['react-router-dom'],
           // UI component libraries - loaded when UI components are rendered
           'ui-vendor': ['@radix-ui/react-select', '@radix-ui/react-popover', '@radix-ui/react-tabs', 'lucide-react'],
           // Charts - only loaded when dashboard charts are needed
-          'chart-vendor': ['recharts'],
+          // 'chart-vendor': ['recharts'],
           // Date/time utilities - loaded when date pickers are used
           'date-vendor': ['date-fns', 'date-fns-tz', 'luxon'],
           // Form handling - loaded when forms are rendered
@@ -61,7 +60,7 @@ export default defineConfig(({ mode }) => ({
           // Office/PDF functionality - only loaded when generating reports
           'office-vendor': ['xlsx', 'jspdf'],
           // Dashboard specific chunks for lazy loading
-          'dashboard-vendor': ['@headlessui/react']
+          // 'dashboard-vendor': ['@headlessui/react']
         }
       }
     }

@@ -178,7 +178,7 @@ const InactiveEmployees: React.FC = () => {
                                         </div>
 
                                         <div className="text-sm text-gray-600 dark:text-gray-400">
-                                            <span className="font-medium">Position:</span> {employee.designation || employee.position}
+                                            <span className="font-medium">Position:</span> {employee.position}
                                         </div>
                                     </div>
 
@@ -251,7 +251,7 @@ const InactiveEmployees: React.FC = () => {
                                                     {employeeDetails.firstName} {employeeDetails.lastName}
                                                 </h3>
                                                 <p className="text-gray-600 dark:text-gray-400">
-                                                    {employeeDetails.designation || employeeDetails.position} • {employeeDetails.department}
+                                                    {employeeDetails.position} • {employeeDetails.department}
                                                 </p>
                                                 <p className="text-sm text-gray-500 dark:text-gray-500">
                                                     Employee ID: {employeeDetails.employeeId}

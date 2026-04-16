@@ -328,11 +328,11 @@ const EmployeeAttendanceTable = memo(({ onRegularizationRequest }: EmployeeAtten
     if (attendance.status === 'holiday') {
       return <Calendar className="w-4 h-4 text-orange-500" />;
     }
-    if (attendance.status === 'absent' || (!attendance.checkIn && !attendance.checkOut)) {
-      return <XCircle className="w-4 h-4 text-red-500" />;
-    }
     if (attendance.status === 'leave') {
       return <Heart className="w-4 h-4 text-purple-500" />;
+    }
+    if (attendance.status === 'absent' || (!attendance.checkIn && !attendance.checkOut)) {
+      return <XCircle className="w-4 h-4 text-red-500" />;
     }
     if (attendance.checkIn && attendance.checkOut) {
       return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -352,11 +352,11 @@ const EmployeeAttendanceTable = memo(({ onRegularizationRequest }: EmployeeAtten
     if (attendance.status === 'holiday') {
       return `${baseClasses} bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300`;
     }
-    if (attendance.status === 'absent' || (!attendance.checkIn && !attendance.checkOut)) {
-      return `${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300`;
-    }
     if (attendance.status === 'leave') {
       return `${baseClasses} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300`;
+    }
+    if (attendance.status === 'absent' || (!attendance.checkIn && !attendance.checkOut)) {
+      return `${baseClasses} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300`;
     }
     if (attendance.checkIn && attendance.checkOut) {
       return `${baseClasses} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300`;

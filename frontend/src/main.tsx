@@ -40,6 +40,8 @@ const AdminRequestsPage = lazy(() => import('./components/hr/AdminRequestsPage')
 const PoliciesPage = lazy(() => import('./components/hr/PoliciesPage'));
 const SettingsPage = lazy(() => import('./components/hr/SettingsPage'));
 const ChatBot = lazy(() => import('./components/chatbot/chatbot'));
+const MyExpenses = lazy(() => import('./components/employee/MyExpenses'));
+const ExpenseManagement = lazy(() => import('./components/hr/ExpenseManagement'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 
 // 🚀 PHASE 2 OPTIMIZATION: Enhanced loading component with skeleton
@@ -132,8 +134,12 @@ createRoot(document.getElementById('root') as HTMLElement).render(
                                         <Route path="/requests" element={<SidebarDemo />}>
                                             <Route index element={<MyRequests />} />
                                         </Route>
+                                        <Route path="/expenses" element={<SidebarDemo />}>
+                                            <Route path="my" element={<MyExpenses />} />
+                                        </Route>
                                         <Route path="/admin" element={<SidebarDemo />}>
                                             <Route path="requests" element={<AdminRequestsPage />} />
+                                            <Route path="expenses" element={<ExpenseManagement />} />
                                         </Route>
                                         <Route path="/chatbot" element={<SidebarDemo />}>
                                             <Route index element={<ChatBot />} />

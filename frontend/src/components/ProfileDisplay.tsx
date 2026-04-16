@@ -79,7 +79,7 @@ export default function ProfileDisplay() {
   // Helper getters for Employee type properties
   const isActive = employee?.isActive === true;
   const joiningDate = employee?.joiningDate;
-  const position = employee?.position || employee?.designation || "N/A";
+  const position = employee?.position || "N/A";
   const department = employee?.department || "N/A";
   const phone = employee?.phone || "N/A";
 

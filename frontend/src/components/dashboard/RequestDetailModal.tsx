@@ -7,7 +7,8 @@ import {
   useReviewRegularization,
   useApprovePasswordReset,
   useRejectPasswordReset,
-  useUpdateWFHStatus
+  useUpdateWFHStatus,
+  useUpdateExpenseStatus
 } from '@/hooks/queries';
 
 interface AttemptedLocation {
@@ -18,7 +19,7 @@ interface AttemptedLocation {
 interface Request {
   _id?: string;
   id?: string;
-  type: 'leave' | 'help' | 'regularization' | 'password' | 'wfh';
+  type: 'leave' | 'help' | 'regularization' | 'password' | 'wfh' | 'expense';
   status: 'pending' | 'approved' | 'rejected' | 'in-progress' | 'resolved' | 'expired' | 'completed';
   employee: string;
   date?: string;
@@ -29,6 +30,9 @@ interface Request {
   // Leave request fields
   leaveType?: string;
   leaveDate?: string;
+  startDate?: string;
+  endDate?: string;
+  numberOfDays?: number;
   leaveReason?: string;
 
   // Help request fields
@@ -52,6 +56,10 @@ interface Request {
   nearestOffice?: string;
   distanceFromOffice?: number;
   attemptedLocation?: AttemptedLocation;
+
+  // Expense request fields
+  item?: string;
+  amount?: number;
 }
 
 interface RequestDetailModalProps {
@@ -79,6 +87,7 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
   const approvePasswordResetMutation = useApprovePasswordReset();
   const rejectPasswordResetMutation = useRejectPasswordReset();
   const updateWFHMutation = useUpdateWFHStatus();
+  const updateExpenseMutation = useUpdateExpenseStatus();
 
   const isProcessing =
     updateLeaveMutation.isPending ||
@@ -86,7 +95,8 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
     reviewRegularizationMutation.isPending ||
     approvePasswordResetMutation.isPending ||
     rejectPasswordResetMutation.isPending ||
-    updateWFHMutation.isPending;
+    updateWFHMutation.isPending ||
+    updateExpenseMutation.isPending;
 
   if (!isOpen || !request) return null;
 
@@ -144,6 +154,9 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
         case 'wfh':
           await updateWFHMutation.mutateAsync({ requestId, status: status as 'pending' | 'approved' | 'rejected', reviewComment });
           break;
+        case 'expense':
+          await updateExpenseMutation.mutateAsync({ id: requestId, status: status as 'approved' | 'rejected', reviewComment });
+          break;
         default:
           throw new Error('Unknown request type');
       }
@@ -180,7 +193,8 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
 
   const renderRequestDetails = () => {
     switch (request.type) {
-      case 'leave':
+      case 'leave': {
+        const isMultiDay = request.startDate && request.endDate && request.startDate !== request.endDate;
         return (
           <div className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -188,17 +202,39 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
                 <label className="text-xs sm:text-sm font-medium text-muted-foreground">Leave Type</label>
                 <p className="text-sm sm:text-base text-foreground capitalize mt-1">{request.leaveType}</p>
               </div>
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Leave Date</label>
-                <p className="text-sm sm:text-base text-foreground mt-1">{formatDate(request.leaveDate, false, 'DD MMMM YYYY')}</p>
-              </div>
+              {isMultiDay ? (
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Leave Period</label>
+                  <p className="text-sm sm:text-base text-foreground mt-1">
+                    {formatDate(request.startDate, false, 'DD MMM YYYY')} → {formatDate(request.endDate, false, 'DD MMM YYYY')}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Leave Date</label>
+                  <p className="text-sm sm:text-base text-foreground mt-1">
+                    {formatDate(request.leaveDate || request.startDate, false, 'DD MMMM YYYY')}
+                  </p>
+                </div>
+              )}
             </div>
+            {request.numberOfDays !== undefined && (
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Working Days</label>
+                <p className="mt-1">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                    {request.numberOfDays} day{request.numberOfDays !== 1 ? 's' : ''}
+                  </span>
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-xs sm:text-sm font-medium text-muted-foreground">Reason</label>
               <p className="text-sm sm:text-base text-foreground mt-1 leading-relaxed">{request.leaveReason}</p>
             </div>
           </div>
         );
+      }
 
       case 'help': {
         const getPriorityBadge = (priority?: 'low' | 'medium' | 'high') => {
@@ -350,6 +386,31 @@ const RequestDetailModal = ({ request, isOpen, onClose, onUpdate }: RequestDetai
               <label className="text-xs sm:text-sm font-medium text-muted-foreground">Reason</label>
               <p className="text-sm sm:text-base text-foreground mt-1 leading-relaxed">
                 {request.reason}
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      case 'expense': {
+        return (
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Item / Description</label>
+                <p className="text-sm sm:text-base text-foreground mt-1 font-medium">{request.item}</p>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Amount</label>
+                <p className="text-sm sm:text-base text-emerald-600 dark:text-emerald-400 mt-1 font-bold">
+                  ₹{request.amount?.toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground">Service Date</label>
+              <p className="text-sm sm:text-base text-foreground mt-1">
+                {formatDate(request.date, false, 'DD MMMM YYYY')}
               </p>
             </div>
           </div>

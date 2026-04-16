@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, HelpCircle, Calendar, RefreshCw, Clock, Key, MapPin } from 'lucide-react';
+import { FileText, HelpCircle, Calendar, RefreshCw, Clock, Key, MapPin, IndianRupee } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RequestDetailModal from './RequestDetailModal';
 import { formatISTDate } from '@/utils/luxonUtils';
@@ -8,7 +8,8 @@ import {
   useAllHelpInquiries,
   useRegularizationRequests,
   usePasswordResetRequests,
-  useWFHRequests
+  useWFHRequests,
+  useAllExpenses
 } from '@/hooks/queries';
 
 // Types
@@ -62,7 +63,13 @@ interface WFHRequest extends BaseRequest {
   employeeId?: string;
 }
 
-type UnifiedRequest = LeaveRequest | HelpRequest | RegularizationRequest | PasswordRequest | WFHRequest;
+interface ExpenseRequest extends BaseRequest {
+  type: 'expense';
+  item?: string;
+  amount?: number;
+}
+
+type UnifiedRequest = LeaveRequest | HelpRequest | RegularizationRequest | PasswordRequest | WFHRequest | ExpenseRequest;
 
 const AdminPendingRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<UnifiedRequest | null>(null);
@@ -75,8 +82,9 @@ const AdminPendingRequests = () => {
   const { data: regData, isLoading: regLoading, refetch: refetchReg } = useRegularizationRequests();
   const { data: passwordData, isLoading: passwordLoading, refetch: refetchPassword } = usePasswordResetRequests();
   const { data: wfhData, isLoading: wfhLoading, refetch: refetchWFH } = useWFHRequests({ status: 'pending' });
+  const { data: expensesData, isLoading: expensesLoading, refetch: refetchExpenses } = useAllExpenses({ status: 'pending' });
 
-  const isLoading = leavesLoading || helpLoading || regLoading || passwordLoading || wfhLoading;
+  const isLoading = leavesLoading || helpLoading || regLoading || passwordLoading || wfhLoading || expensesLoading;
 
   // Process and combine all pending requests
   const requests = useMemo<UnifiedRequest[]>(() => {
@@ -154,11 +162,28 @@ const AdminPendingRequests = () => {
       })));
     }
 
+    // Process Expense requests (already filtered by status: pending)
+    if (expensesData) {
+      const expenses = expensesData.expenses || expensesData;
+      allRequests.push(...expenses.map((exp: any): ExpenseRequest => ({
+        ...exp,
+        type: 'expense',
+        icon: <IndianRupee className="w-5 h-5 text-emerald-500" />,
+        title: `Expense Reimbursement: ${exp.item || 'Reimbursement'}`,
+        description: `Amount: ₹${Number(exp.amount || 0).toLocaleString()}`,
+        employee: exp.employeeName || 
+                 (exp.employee && typeof exp.employee === 'object' && 'firstName' in exp.employee ? 
+                  `${exp.employee.firstName} ${exp.employee.lastName || ''}`.trim() : 
+                  'Unknown Employee'),
+        date: exp.date || exp.createdAt
+      })));
+    }
+
     // Sort by date (most recent first) and limit to 10
     return allRequests
       .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
       .slice(0, 10);
-  }, [leavesData, helpData, regData, passwordData, wfhData]);
+  }, [leavesData, helpData, regData, passwordData, wfhData, expensesData]);
 
   const handleRequestClick = (request: UnifiedRequest): void => {
     setSelectedRequest(request);
@@ -182,6 +207,7 @@ const AdminPendingRequests = () => {
     refetchReg();
     refetchPassword();
     refetchWFH();
+    refetchExpenses();
   };
 
   if (isLoading) {

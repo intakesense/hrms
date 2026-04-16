@@ -63,10 +63,8 @@ export interface Employee {
   fatherName?: string;
   motherName?: string;
   dateOfBirth?: string;
-  dateOfJoining: string;
-  joiningDate?: string; // Backend uses this field name
+  joiningDate: string;
   department?: string;
-  designation?: string;
   position?: string;
   employeeId: string;
   status: 'active' | 'inactive';
@@ -605,6 +603,40 @@ export interface HelpInquiry {
 }
 
 // ============================================================================
+// EXPENSE MANAGEMENT
+// ============================================================================
+
+export type ExpenseStatus = ApprovalStatus;
+
+export interface Expense {
+  _id: string;
+  employee: string | Employee; // Can be ID or populated
+  employeeName: string;
+  date: string;
+  item: string;
+  amount: number;
+  status: ExpenseStatus;
+  reviewComment?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateExpenseDto {
+  date: string;
+  item: string;
+  amount: number;
+}
+
+export interface ExpenseQueryParams {
+  employeeId?: string;
+  status?: ExpenseStatus;
+  startDate?: string;
+  endDate?: string;
+}
+
+// ============================================================================
 // TASK REPORTS
 // ============================================================================
 
@@ -817,9 +849,8 @@ export interface CreateEmployeeDto {
   email: string;
   phone?: string | number;
   dateOfBirth?: string | null;
-  dateOfJoining: string | null;
+  joiningDate: string | null;
   department?: string;
-  designation?: string;
   position?: string;
   employeeId: string;
   gender?: string;
@@ -851,9 +882,13 @@ export interface UpdateEmployeeDto extends Partial<Omit<CreateEmployeeDto, 'addr
   emergencyContact?: Employee['emergencyContact'];
 }
 
+export type LeaveMode = 'single' | 'multi';
+
 export interface LeaveRequestDto {
+  leaveMode: LeaveMode;
   leaveType: LeaveType;
-  date: string;
+  startDate: string;
+  endDate: string;
   reason: string;
 }
 
@@ -1014,7 +1049,7 @@ export interface EmployeeQueryParams extends PaginationParams {
   department?: string;
   status?: 'active' | 'inactive';
   search?: string;
-  designation?: string;
+  position?: string;
 }
 
 // Salary structure query params

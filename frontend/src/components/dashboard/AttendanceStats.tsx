@@ -1,5 +1,5 @@
 import { useMemo, memo } from "react";
-import { Calendar, CheckCircle, XCircle, AlertCircle, Clock, LucideIcon } from "lucide-react";
+import { Calendar, CheckCircle, XCircle, AlertCircle, Clock, Heart, LucideIcon } from "lucide-react";
 
 interface AttendancePercentage {
   totalWorkingDays: number;
@@ -12,6 +12,7 @@ interface Statistics {
   weekend: number;
   holiday: number;
   halfDay: number;
+  leave: number;
 }
 
 interface AttendanceReport {
@@ -23,6 +24,7 @@ interface AttendanceStats {
   presentDays: number;
   absentDays: number;
   halfDays: number;
+  leaveDays: number;
   missingCheckouts: number;
 }
 
@@ -69,6 +71,7 @@ const AttendanceStats = ({ attendanceReport, isLoading = false, missingCheckouts
         presentDays: attendanceReport.attendancePercentage?.presentDays || 0,
         absentDays: attendanceReport.attendancePercentage?.absentDays || 0,
         halfDays: attendanceReport.statistics?.halfDay || 0,
+        leaveDays: attendanceReport.statistics?.leave || 0,
         missingCheckouts: missingCheckoutsCount
       };
     }
@@ -77,6 +80,7 @@ const AttendanceStats = ({ attendanceReport, isLoading = false, missingCheckouts
       presentDays: 0,
       absentDays: 0,
       halfDays: 0,
+      leaveDays: 0,
       missingCheckouts: missingCheckoutsCount
     };
   }, [attendanceReport, missingCheckoutsCount]);
@@ -104,14 +108,15 @@ const AttendanceStats = ({ attendanceReport, isLoading = false, missingCheckouts
     },
     { title: "Present Days", value: attendanceStats.presentDays, icon: CheckCircle, color: "green", barWidth: `${attendancePercentage}%`, subText: `${attendancePercentage}% att. (incl. half-days)` },
     { title: "Absent Days", value: attendanceStats.absentDays, icon: XCircle, color: "red", barWidth: `${workingDaysToDate > 0 ? (attendanceStats.absentDays / workingDaysToDate) * 100 : 0}%` },
+    { title: "Leave Days", value: attendanceStats.leaveDays, icon: Heart, color: "purple", barWidth: `${workingDaysToDate > 0 ? (attendanceStats.leaveDays / workingDaysToDate) * 100 : 0}%` },
     { title: "Half Days", value: attendanceStats.halfDays, icon: AlertCircle, color: "amber", barWidth: `${workingDaysToDate > 0 ? (attendanceStats.halfDays / workingDaysToDate) * 100 : 0}%` },
     { title: "Missing Checkouts", value: attendanceStats.missingCheckouts, icon: Clock, color: "orange", barWidth: `${workingDaysToDate > 0 ? (attendanceStats.missingCheckouts / workingDaysToDate) * 100 : 0}%` },
   ], [workingDaysInMonth, daysInMonth, attendanceStats, attendancePercentage, workingDaysToDate, weekendsInMonth, holidaysInMonth]);
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
-        {[...Array(5)].map((_, index) => (
+      <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+        {[...Array(6)].map((_, index) => (
           <div key={index} className="bg-card rounded-xl shadow-xl p-3 sm:p-5 animate-pulse">
             <div className="flex items-center justify-between mb-2 sm:mb-3.5">
               <div className="h-3 bg-muted rounded w-16"></div>
@@ -126,7 +131,7 @@ const AttendanceStats = ({ attendanceReport, isLoading = false, missingCheckouts
   }
 
   return (
-    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
       {cards.map((card) => {
         const Icon = card.icon;
         // Define color classes based on light/dark mode and card type

@@ -1,8 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axiosInstance from '@/lib/axios';
 import { queryKeys } from '@/lib/queryKeys';
-import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { API_ENDPOINTS, buildEndpointWithQuery } from '@/lib/apiEndpoints';
 import type { ApiResponse, Leave, LeaveRequestDto, LeaveStatus } from '@/types';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface PreviewLeaveDaysResult {
+  workingDays: number;
+  excludedDays: number;
+  breakdown: {
+    sundays: number;
+    saturdayHolidays: number;
+    holidays: number;
+  };
+}
 
 // ============================================================================
 // QUERIES
@@ -38,6 +52,25 @@ export const useAllLeaves = (options?: { enabled?: boolean }) => {
   });
 };
 
+/**
+ * Preview leave days — fetches working day count for a date range
+ */
+export const usePreviewLeaveDays = (startDate: string, endDate: string) => {
+  return useQuery({
+    queryKey: ['leaves', 'preview-days', startDate, endDate] as const,
+    queryFn: async () => {
+      const endpoint = buildEndpointWithQuery(API_ENDPOINTS.LEAVES.PREVIEW_DAYS, {
+        startDate,
+        endDate,
+      });
+      const { data } = await axiosInstance.get<{ success: boolean } & PreviewLeaveDaysResult>(endpoint);
+      return data;
+    },
+    enabled: !!startDate && !!endDate && startDate <= endDate,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+};
+
 // ============================================================================
 // MUTATIONS
 // ============================================================================
@@ -70,11 +103,11 @@ export const useRequestLeave = () => {
           employee: '',
           employeeName: '',
           leaveType: leaveData.leaveType,
-          startDate: leaveData.date,
-          endDate: leaveData.date,
+          startDate: leaveData.startDate,
+          endDate: leaveData.endDate,
           reason: leaveData.reason,
           status: 'pending',
-          numberOfDays: leaveData.leaveType === 'half-day' ? 0.5 : 1,
+          numberOfDays: leaveData.leaveMode === 'multi' ? 0 : (leaveData.leaveType === 'half-day' ? 0.5 : 1),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         } as Leave,

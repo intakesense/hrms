@@ -621,7 +621,7 @@ export default function MyAttendance() {
                     <td className="p-4">
                       <div className="flex items-center space-x-3">
                         {getStatusIcon(record)}
-                        <span className="font-medium">{formatISTDate(record.date, false, 'DD MMM YYYY')}</span>
+                        <span className="font-medium">{formatISTDate(record.date, { customFormat: 'dd MMM yyyy' })}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -676,7 +676,7 @@ export default function MyAttendance() {
                   <div className="flex items-center space-x-3">
                     {getStatusIcon(record)}
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{formatISTDate(record.date, false, 'DD MMM YYYY')}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{formatISTDate(record.date, { customFormat: 'dd MMM yyyy' })}</span>
                       <div className="text-sm font-medium text-slate-600 dark:text-slate-400">{formatDayOfWeek(record.date)}</div>
                     </div>
                   </div>

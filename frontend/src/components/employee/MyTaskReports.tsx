@@ -312,7 +312,7 @@ export default function MyTaskReports() {
                     <td className="p-4">
                       <div className="flex items-center space-x-2">
                         <Calendar className="w-4 h-4 text-purple-400" />
-                        <span className="font-medium">{formatISTDate(report.submissionDate, 'DD MMM yyyy')}</span>
+                        <span className="font-medium">{formatISTDate(report.submissionDate, { customFormat: 'dd MMM yyyy' })}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -419,7 +419,7 @@ export default function MyTaskReports() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-purple-400" />
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{formatISTDate(report.submissionDate, 'DD MMM yyyy')}</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{formatISTDate(report.submissionDate, { customFormat: 'dd MMM yyyy' })}</span>
                   </div>
                 </div>
 
@@ -647,7 +647,7 @@ export default function MyTaskReports() {
             <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Tasks for {formatISTDate(selectedReport.submissionDate, 'DD MMMM yyyy')}
+                  Tasks for {formatISTDate(selectedReport.submissionDate, { customFormat: 'dd MMMM yyyy' })}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {selectedReport.tasks?.length || 0} tasks completed

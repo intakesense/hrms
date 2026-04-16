@@ -204,7 +204,7 @@ const TaskReportsPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 dark:text-slate-300">
-                        {formatISTDate(report.date, false, 'dd MMMM yyyy')}
+                        {formatISTDate(report.date, { customFormat: 'dd MMMM yyyy' })}
                       </td>
                       <td className="px-6 py-4">
                         <ul className="list-disc list-inside space-y-1 text-sm text-slate-700 dark:text-slate-300">
