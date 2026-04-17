@@ -69,13 +69,16 @@ export const createEmployee = asyncHandler(async (req: IAuthRequest, res: Respon
     emergencyContactNumber?: string;
   };
 
+  // Build duplicate check conditions only for non-empty fields
+  const duplicateConditions: Record<string, string>[] = [
+    { employeeId },
+    { email },
+  ];
+  if (aadhaarNumber?.trim()) duplicateConditions.push({ aadhaarNumber: aadhaarNumber.trim() });
+  if (panNumber?.trim()) duplicateConditions.push({ panNumber: panNumber.trim() });
+
   const existingEmployee = await Employee.findOne({
-    $or: [
-      { employeeId },
-      { email },
-      { aadhaarNumber },
-      { panNumber }
-    ]
+    $or: duplicateConditions
   });
 
   if (existingEmployee) {

@@ -847,7 +847,7 @@ export interface CreateEmployeeDto {
   firstName: string;
   lastName: string;
   email: string;
-  phone?: string | number;
+  phone?: string;
   dateOfBirth?: string | null;
   joiningDate: string | null;
   department?: string;
@@ -855,13 +855,13 @@ export interface CreateEmployeeDto {
   employeeId: string;
   gender?: string;
   maritalStatus?: string;
-  address?: string; // Form uses string
-  aadhaarNumber?: string | number;
+  address?: string;
+  aadhaarNumber?: string;
   panNumber?: string;
   fatherName?: string;
   motherName?: string;
-  fatherPhone?: string | number;
-  motherPhone?: string | number;
+  fatherPhone?: string;
+  motherPhone?: string;
   officeAddress?: string;
   companyName?: string;
   employmentType?: string;
@@ -871,7 +871,7 @@ export interface CreateEmployeeDto {
   bankAccountNumber?: string;
   bankIFSCCode?: string;
   emergencyContactName?: string;
-  emergencyContactNumber?: string | number;
+  emergencyContactNumber?: string;
 }
 
 // Use Omit to avoid type conflict on 'address'

@@ -60,9 +60,8 @@ const MySalarySlips: React.FC = () => {
   const { toast } = useToast();
   const user = useAuth();
 
-  // Fetch employee profile
-  const { data: profileData } = useProfile();
-  const employeeData = profileData?.employee;
+  // Fetch employee profile - useProfile returns Employee object directly
+  const { data: employeeData } = useProfile();
 
   // Build query params
   const queryParams: QueryParams = useMemo(() => ({

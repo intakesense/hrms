@@ -150,15 +150,21 @@ const AddEmployee: React.FC = () => {
             return;
         }
 
-        // Prepare data for API call, converting types as needed
+        // Strip non-digit characters from numeric-only fields (users may enter spaces/dashes)
+        const digitsOnly = (val: string | undefined) => val ? val.replace(/\D/g, '') : undefined;
+
+        // Prepare data for API call - keep numeric strings as strings since
+        // the backend Mongoose model validates them with regex patterns
         const employeeData: CreateEmployeeDto = {
             ...formData,
-            phone: formData.phone ? Number(formData.phone) : undefined,
-            aadhaarNumber: formData.aadhaarNumber ? Number(formData.aadhaarNumber) : undefined,
-            fatherPhone: formData.fatherPhone ? Number(formData.fatherPhone) : undefined,
-            motherPhone: formData.motherPhone ? Number(formData.motherPhone) : undefined,
-            bankAccountNumber: formData.bankAccountNumber, // Keep as string
-            emergencyContactNumber: formData.emergencyContactNumber ? Number(formData.emergencyContactNumber) : undefined,
+            phone: digitsOnly(formData.phone),
+            aadhaarNumber: digitsOnly(formData.aadhaarNumber),
+            fatherPhone: digitsOnly(formData.fatherPhone) || undefined,
+            motherPhone: digitsOnly(formData.motherPhone) || undefined,
+            bankAccountNumber: formData.bankAccountNumber?.trim() || undefined,
+            emergencyContactNumber: digitsOnly(formData.emergencyContactNumber),
+            panNumber: formData.panNumber?.trim().toUpperCase() || undefined,
+            bankIFSCCode: formData.bankIFSCCode?.trim().toUpperCase() || undefined,
             dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString() : null,
             joiningDate: formData.joiningDate ? formData.joiningDate.toISOString() : null,
         };
@@ -174,16 +180,25 @@ const AddEmployee: React.FC = () => {
             onError: (error: any) => {
                 let errorMessage = "Failed to create employee.";
                 if (error?.response?.data) {
-                    if (error.response.data.message) {
-                        errorMessage = error.response.data.message;
-                    } else if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
-                        errorMessage = error.response.data.errors.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(', ');
-                    } else if (typeof error.response.data.errors === 'object') {
-                        errorMessage = Object.values(error.response.data.errors).join(', ');
+                    const data = error.response.data;
+
+                    // Parse Mongoose validation error details (array of {field, message})
+                    if (data.details && Array.isArray(data.details) && data.details.length > 0) {
+                        errorMessage = data.details.map((d: any) => d.message || `${d.field} is invalid`).join(', ');
+                    } else if (data.message && data.message !== 'Validation failed') {
+                        errorMessage = data.message;
+                    } else if (data.message) {
+                        errorMessage = data.message;
+                    } else if (data.errors && Array.isArray(data.errors)) {
+                        errorMessage = data.errors.map((e: any) => e.msg || e.message || JSON.stringify(e)).join(', ');
+                    } else if (typeof data.errors === 'object') {
+                        errorMessage = Object.values(data.errors).join(', ');
                     }
                 } else if (error?.message) {
                     errorMessage = error.message;
                 }
+
+                console.error('[CreateEmployee] Error:', error?.response?.data || error);
 
                 toast({
                     title: "Error",
