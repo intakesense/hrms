@@ -111,7 +111,7 @@ export const getSalarySlip = async (req: IAuthRequest, res: Response): Promise<v
     }
 
     const salarySlip = await SalarySlip.findOne(filter)
-      .populate('employee', 'firstName lastName employeeId department position bankName bankAccountNumber');
+      .populate('employee', 'firstName lastName employeeId department position bankName bankAccountNumber panNumber joiningDate companyName email');
 
     if (!salarySlip) {
       res.status(404).json(formatResponse(false, 'Salary slip not found'));
@@ -156,7 +156,7 @@ export const getEmployeeSalarySlips = async (req: IAuthRequest, res: Response): 
 
     const [salarySlips, total] = await Promise.all([
       SalarySlip.find(filter)
-        .populate('employee', 'firstName lastName employeeId department position')
+        .populate('employee', 'firstName lastName employeeId department position bankName bankAccountNumber panNumber joiningDate companyName email')
         .sort({ year: -1, month: -1 })
         .skip(skip)
         .limit(limitNum),
