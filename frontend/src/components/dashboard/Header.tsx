@@ -1,5 +1,5 @@
 import { useState, useEffect, memo } from "react";
-import { Clock, User, Calendar, HelpCircle, Moon, Sun, LogIn, LogOut, MapPin, Edit3, List } from "lucide-react";
+import { Clock, User, Calendar, HelpCircle, Moon, Sun, LogIn, LogOut, MapPin, Edit3, List, Receipt } from "lucide-react";
 import { formatTime, formatISTDate } from "../../utils/luxonUtils";
 import useProfilePicture from "../../hooks/useProfilePicture";
 
@@ -43,6 +43,7 @@ export interface HeaderProps {
   setShowLeaveModal: (show: boolean) => void;
   setShowHelpModal: (show: boolean) => void;
   setShowRegularizationModal: (show: boolean) => void;
+  setShowExpenseModal: (show: boolean) => void;
   wfhRequestPending: boolean;
   toggleTheme: () => void;
   theme: string;
@@ -60,6 +61,7 @@ const Header: React.FC<HeaderProps> = ({
   setShowLeaveModal,
   setShowHelpModal,
   setShowRegularizationModal,
+  setShowExpenseModal,
   wfhRequestPending,
   toggleTheme,
   theme
@@ -109,6 +111,13 @@ const Header: React.FC<HeaderProps> = ({
               className="p-2.5 text-muted-foreground hover:text-cyan-600 dark:hover:text-cyan-400 bg-card rounded-xl shadow-md hover:shadow-lg border border-border transition-all duration-200 hover:scale-105"
             >
               <Edit3 size={18} />
+            </button>
+            <button
+              onClick={() => setShowExpenseModal(true)}
+              title="Submit Expense"
+              className="p-2.5 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 bg-card rounded-xl shadow-md hover:shadow-lg border border-border transition-all duration-200 hover:scale-105"
+            >
+              <Receipt size={18} />
             </button>
             <button
               onClick={() => setShowHelpModal(true)}

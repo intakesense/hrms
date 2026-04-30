@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -7,7 +7,10 @@ import {
   CheckSquare,
   Square,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  MessageSquare,
+  Send,
+  X
 } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,8 @@ const ExpenseManagement = () => {
   const [endDate, setEndDate] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [adminComment, setAdminComment] = useState('');
+  const [rejectingExpenseId, setRejectingExpenseId] = useState<string | null>(null);
+  const [rejectComment, setRejectComment] = useState('');
 
   const { toast } = useToast();
   
@@ -57,19 +62,40 @@ const ExpenseManagement = () => {
     (typeof exp.employee !== 'string' && exp.employee?.employeeId?.includes(searchTerm))
   );
 
-  const handleStatusUpdate = async (id: string, status: 'approved' | 'rejected') => {
+  const handleApprove = async (id: string) => {
     try {
       await updateStatusMutation.mutateAsync({ 
         id, 
-        status, 
-        reviewComment: adminComment 
+        status: 'approved'
       });
       toast({
         variant: "success",
-        title: `Expense ${status}`,
-        description: `The expense has been successfully ${status}.`
+        title: `Expense approved`,
+        description: `The expense has been successfully approved.`
       });
-      setAdminComment('');
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.response?.data?.message || "Something went wrong"
+      });
+    }
+  };
+
+  const handleRejectConfirm = async (id: string) => {
+    try {
+      await updateStatusMutation.mutateAsync({ 
+        id, 
+        status: 'rejected', 
+        reviewComment: rejectComment.trim() || undefined 
+      });
+      toast({
+        variant: "success",
+        title: `Expense rejected`,
+        description: `The expense has been successfully rejected.`
+      });
+      setRejectingExpenseId(null);
+      setRejectComment('');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -326,8 +352,8 @@ const ExpenseManagement = () => {
                     const isPending = expense.status === 'pending';
                     
                     return (
+                      <React.Fragment key={expense._id}>
                       <tr 
-                        key={expense._id} 
                         className={`hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors ${isSelected ? 'bg-amber-50/30 dark:bg-amber-900/5' : ''}`}
                       >
                         <td className="p-4">
@@ -380,15 +406,29 @@ const ExpenseManagement = () => {
                                    size="sm" 
                                    variant="ghost" 
                                    className="text-green-600 hover:bg-green-50 h-8 w-8 p-0"
-                                   onClick={() => handleStatusUpdate(expense._id, 'approved')}
+                                   title="Approve"
+                                   onClick={() => handleApprove(expense._id)}
                                  >
                                    <CheckCircle2 size={20} />
                                  </Button>
                                  <Button 
                                    size="sm" 
                                    variant="ghost" 
-                                   className="text-red-600 hover:bg-red-50 h-8 w-8 p-0"
-                                   onClick={() => handleStatusUpdate(expense._id, 'rejected')}
+                                   className={`h-8 w-8 p-0 ${
+                                     rejectingExpenseId === expense._id 
+                                       ? 'text-red-700 bg-red-100 dark:bg-red-900/30' 
+                                       : 'text-red-600 hover:bg-red-50'
+                                   }`}
+                                   title="Reject"
+                                   onClick={() => {
+                                     if (rejectingExpenseId === expense._id) {
+                                       setRejectingExpenseId(null);
+                                       setRejectComment('');
+                                     } else {
+                                       setRejectingExpenseId(expense._id);
+                                       setRejectComment('');
+                                     }
+                                   }}
                                  >
                                    <XCircle size={20} />
                                  </Button>
@@ -399,6 +439,49 @@ const ExpenseManagement = () => {
                           </div>
                         </td>
                       </tr>
+                      {/* Inline Reject Comment Row */}
+                      {rejectingExpenseId === expense._id && (
+                        <tr className="bg-red-50/60 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/30 animate-in fade-in slide-in-from-top-1 duration-200">
+                          <td colSpan={6} className="px-4 py-3">
+                            <div className="flex items-center gap-3 max-w-2xl ml-auto">
+                              <MessageSquare size={16} className="text-red-400 flex-shrink-0" />
+                              <Input
+                                placeholder="Rejection reason (optional)..."
+                                value={rejectComment}
+                                onChange={e => setRejectComment(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    handleRejectConfirm(expense._id);
+                                  }
+                                }}
+                                className="h-9 bg-white dark:bg-slate-900 border-red-200 dark:border-red-900/40 focus:ring-red-500/20 text-sm"
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleRejectConfirm(expense._id)}
+                                className="bg-red-600 hover:bg-red-700 text-white h-9 px-4 gap-1.5 flex-shrink-0"
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                <Send size={14} />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setRejectingExpenseId(null);
+                                  setRejectComment('');
+                                }}
+                                className="text-slate-400 hover:text-slate-600 h-9 w-9 p-0 flex-shrink-0"
+                              >
+                                <X size={16} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>

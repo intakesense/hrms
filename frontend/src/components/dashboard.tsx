@@ -18,8 +18,10 @@ import {
     useSubmitHelpInquiry,
     useAdminDashboard,
 } from "../hooks/queries";
+import { useCreateExpense } from "../hooks/queries/useExpenses";
 import LeaveRequestModal from "./LeaveRequestModal";
 import HelpDeskModal from "./HelpDeskModal";
+import ExpenseModal from "./ExpenseModal";
 import { useTheme } from '../contexts/ThemeContext';
 import { useToast } from "./ui/toast";
 import RegularizationModal from "./dashboard/RegularizationModal";
@@ -57,6 +59,7 @@ interface DashboardModals {
     showPresentEmployeesModal: boolean;
     showWFHModal: boolean;
     showNonWorkingDayWarning: boolean;
+    showExpenseModal: boolean;
 }
 
 interface DashboardLoading {
@@ -131,6 +134,7 @@ const dashboardInitialState: DashboardState = {
         showPresentEmployeesModal: false,
         showWFHModal: false,
         showNonWorkingDayWarning: false,
+        showExpenseModal: false,
     },
     loading: {
         locationLoading: false,
@@ -204,6 +208,7 @@ const HRMSDashboard: React.FC = () => {
     const requestWFHMutation = useRequestWFH();
     const requestLeaveMutation = useRequestLeave();
     const submitHelpInquiryMutation = useSubmitHelpInquiry();
+    const createExpenseMutation = useCreateExpense();
 
     // Monthly attendance
     const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -246,7 +251,8 @@ const HRMSDashboard: React.FC = () => {
         showAbsentEmployeesModal,
         showPresentEmployeesModal,
         showWFHModal,
-        showNonWorkingDayWarning
+        showNonWorkingDayWarning,
+        showExpenseModal
     } = modals;
 
     const {
@@ -871,6 +877,7 @@ const HRMSDashboard: React.FC = () => {
                     setShowLeaveModal={(value: boolean) => setModal('showLeaveModal', value)}
                     setShowHelpModal={(value: boolean) => setModal('showHelpModal', value)}
                     setShowRegularizationModal={(value: boolean) => setModal('showRegularizationModal', value)}
+                    setShowExpenseModal={(value: boolean) => setModal('showExpenseModal', value)}
                     wfhRequestPending={!!wfhRequestPending}
                     toggleTheme={toggleTheme}
                     theme={theme}
@@ -1062,6 +1069,29 @@ const HRMSDashboard: React.FC = () => {
                 isOpen={showPresentEmployeesModal}
                 onClose={() => setModal('showPresentEmployeesModal', false)}
                 presentEmployees={adminSummary?.presentEmployees || []}
+            />
+
+            <ExpenseModal
+                isOpen={showExpenseModal}
+                onClose={() => setModal('showExpenseModal', false)}
+                onSubmit={async (data) => {
+                    try {
+                        await createExpenseMutation.mutateAsync(data);
+                        toast({
+                            variant: "success",
+                            title: "Expense Submitted",
+                            description: "Your expense has been submitted for review."
+                        });
+                        setModal('showExpenseModal', false);
+                    } catch (error: any) {
+                        toast({
+                            variant: "error",
+                            title: "Submission Failed",
+                            description: error.response?.data?.message || error.data?.message || "Something went wrong"
+                        });
+                    }
+                }}
+                isLoading={createExpenseMutation.isPending}
             />
         </div>
     );
